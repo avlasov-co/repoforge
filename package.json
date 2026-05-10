@@ -4,6 +4,7 @@
   "description": "Local-first repository context packs for coding agents.",
   "version": "0.3.0",
   "publisher": "avlasov-co",
+  "license": "MIT",
   "engines": {
     "vscode": "^1.90.0"
   },
