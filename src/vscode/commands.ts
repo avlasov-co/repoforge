@@ -12,12 +12,17 @@ import { HandoffKind } from "../formatters/handoffTypes";
 import { copyTextToClipboard } from "./clipboard";
 import { searchFiles } from "./filePicker";
 import { formatHandoff, saveHandoff } from "./handoffCommands";
+import { RepoForgePatchCommands } from "./patchCommands";
 import { listTaskProfiles, saveTaskProfile } from "./taskProfiles";
+import { RepoForgeValidationCommands } from "./validationCommands";
 import { WebviewToExtensionMessage } from "./webviewMessages";
 import { RepoForgeState } from "./workspaceState";
 import { RepoForgeWebviewProvider } from "./webviewProvider";
 
 export class RepoForgeCommands {
+  private readonly patchCommands = new RepoForgePatchCommands();
+  private readonly validationCommands = new RepoForgeValidationCommands();
+
   constructor(
     private readonly state: RepoForgeState,
     private readonly webviewProvider?: RepoForgeWebviewProvider
@@ -41,7 +46,13 @@ export class RepoForgeCommands {
       ["repoforge.copyContinueHandoff", () => this.copyHandoff("continue")],
       ["repoforge.saveTaskProfile", () => this.saveTaskProfile()],
       ["repoforge.loadTaskProfile", () => this.loadTaskProfile()],
-      ["repoforge.searchFiles", () => this.searchFiles()]
+      ["repoforge.searchFiles", () => this.searchFiles()],
+      ["repoforge.parsePatchFromClipboard", () => this.parsePatchFromClipboard()],
+      ["repoforge.previewPatch", () => this.previewPatch()],
+      ["repoforge.applyLastPatch", () => this.applyLastPatch()],
+      ["repoforge.runValidation", () => this.runValidation()],
+      ["repoforge.openLastPatch", () => this.openLastPatch()],
+      ["repoforge.openLastValidation", () => this.openLastValidation()]
     ];
     for (const [id, handler] of commands) {
       context.subscriptions.push(vscode.commands.registerCommand(id, handler));
@@ -320,9 +331,73 @@ export class RepoForgeCommands {
       await this.copyLastPack();
     } else if (message.type === "openLastPack") {
       await this.openLastContextPack();
+    } else if (message.type === "parsePatchFromClipboard") {
+      await this.parsePatchFromClipboard();
+    } else if (message.type === "previewPatch") {
+      await this.previewPatch();
+    } else if (message.type === "applyLastPatch") {
+      await this.applyLastPatch();
+    } else if (message.type === "runValidation") {
+      await this.runValidation();
+    } else if (message.type === "openLastPatch") {
+      await this.openLastPatch();
+    } else if (message.type === "openLastValidation") {
+      await this.openLastValidation();
     } else if (message.type === "saveTaskProfile") {
       await this.saveTaskProfile(message.name);
     }
+  }
+
+  async parsePatchFromClipboard(): Promise<void> {
+    const repoRoot = this.requireWorkspaceRoot();
+    if (!repoRoot) {
+      return;
+    }
+    await this.patchCommands.parsePatchFromClipboard(repoRoot);
+    await this.webviewProvider?.refresh();
+  }
+
+  async previewPatch(): Promise<void> {
+    const repoRoot = this.requireWorkspaceRoot();
+    if (!repoRoot) {
+      return;
+    }
+    await this.patchCommands.previewPatch(repoRoot);
+    await this.webviewProvider?.refresh();
+  }
+
+  async applyLastPatch(): Promise<void> {
+    const repoRoot = this.requireWorkspaceRoot();
+    if (!repoRoot) {
+      return;
+    }
+    await this.patchCommands.applyLastPatch(repoRoot);
+    await this.webviewProvider?.refresh();
+  }
+
+  async runValidation(): Promise<void> {
+    const repoRoot = this.requireWorkspaceRoot();
+    if (!repoRoot) {
+      return;
+    }
+    await this.validationCommands.runValidation(repoRoot);
+    await this.webviewProvider?.refresh();
+  }
+
+  async openLastPatch(): Promise<void> {
+    const repoRoot = this.requireWorkspaceRoot();
+    if (!repoRoot) {
+      return;
+    }
+    await this.patchCommands.openLastPatch(repoRoot);
+  }
+
+  async openLastValidation(): Promise<void> {
+    const repoRoot = this.requireWorkspaceRoot();
+    if (!repoRoot) {
+      return;
+    }
+    await this.validationCommands.openLastValidation(repoRoot);
   }
 
   private async buildPackForCurrentState(mode: ContextMode) {

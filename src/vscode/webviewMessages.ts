@@ -1,5 +1,7 @@
 import { ContextMode, ContextSelection, TokenBudget, TokenizerProfile } from "../core/types";
 import { ContextPreviewResult } from "../core/contextPreview";
+import { PatchPreview } from "../core/patch/patchTypes";
+import { PersistedValidationRunResult } from "../core/validation/validationHistory";
 import { FileSearchResult } from "./filePicker";
 import { TaskProfile } from "./taskProfiles";
 
@@ -19,6 +21,12 @@ export type WebviewToExtensionMessage =
   | { type: "generatePack" }
   | { type: "copyPack" }
   | { type: "openLastPack" }
+  | { type: "parsePatchFromClipboard" }
+  | { type: "previewPatch" }
+  | { type: "applyLastPatch" }
+  | { type: "runValidation" }
+  | { type: "openLastPatch" }
+  | { type: "openLastValidation" }
   | { type: "clearSelection" }
   | { type: "saveTaskProfile"; name: string };
 
@@ -35,6 +43,8 @@ export interface WebviewState {
   searchResults: FileSearchResult[];
   profiles: TaskProfile[];
   lastPackPath?: string;
+  patchPreview?: PatchPreview;
+  validationResult?: PersistedValidationRunResult;
 }
 
 export type ExtensionToWebviewMessage =

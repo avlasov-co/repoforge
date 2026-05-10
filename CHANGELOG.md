@@ -1,5 +1,24 @@
 # Changelog
 
+## v0.4.0
+
+### Added
+- Unified diff parser.
+- Patch preview workflow.
+- Safe patch application through `git apply --check` and `git apply`.
+- Patch artifacts and history under `.repoforge/`.
+- Validation command runner.
+- Validation artifacts and history under `.repoforge/`.
+- Sidebar Patch + Validation section.
+- Patch and validation result formatters.
+- Tests for patch parsing, patch apply, validation runner, and patch history.
+
+### Notes
+- Patch apply requires a Git repository.
+- Only unified diffs are supported.
+- Validation runs one user-approved command at a time.
+- No staging, committing, conflict resolution, or auto-running validation.
+
 ## v0.3.0
 
 ### Added

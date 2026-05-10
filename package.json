@@ -2,7 +2,7 @@
   "name": "repoforge",
   "displayName": "RepoForge",
   "description": "Local-first repository context packs for coding agents.",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "publisher": "avlasov-co",
   "license": "MIT",
   "engines": {
@@ -43,6 +43,12 @@
     "onCommand:repoforge.saveTaskProfile",
     "onCommand:repoforge.loadTaskProfile",
     "onCommand:repoforge.searchFiles",
+    "onCommand:repoforge.parsePatchFromClipboard",
+    "onCommand:repoforge.previewPatch",
+    "onCommand:repoforge.applyLastPatch",
+    "onCommand:repoforge.runValidation",
+    "onCommand:repoforge.openLastPatch",
+    "onCommand:repoforge.openLastValidation",
     "onView:repoforgeContext"
   ],
   "main": "./dist/src/extension.js",
@@ -115,6 +121,30 @@
       {
         "command": "repoforge.searchFiles",
         "title": "RepoForge: Search Files"
+      },
+      {
+        "command": "repoforge.parsePatchFromClipboard",
+        "title": "RepoForge: Parse Patch From Clipboard"
+      },
+      {
+        "command": "repoforge.previewPatch",
+        "title": "RepoForge: Preview Patch"
+      },
+      {
+        "command": "repoforge.applyLastPatch",
+        "title": "RepoForge: Apply Last Patch"
+      },
+      {
+        "command": "repoforge.runValidation",
+        "title": "RepoForge: Run Validation"
+      },
+      {
+        "command": "repoforge.openLastPatch",
+        "title": "RepoForge: Open Last Patch"
+      },
+      {
+        "command": "repoforge.openLastValidation",
+        "title": "RepoForge: Open Last Validation"
       }
     ],
     "viewsContainers": {

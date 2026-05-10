@@ -22,7 +22,6 @@ RepoForge is not:
 - a chat UI,
 - an auto-trading bot or autonomous agent,
 - a direct Codex, OpenCode, Continue, or LM Studio integration,
-- a patch application engine,
 - a tree-sitter-based parser stack,
 - or a replacement for repository-specific judgment.
 
@@ -77,7 +76,10 @@ The sidebar supports:
 - live token budget preview,
 - scan progress and status messages,
 - copy/open/generate actions,
-- task profile saving.
+- task profile saving,
+- patch parsing and preview actions,
+- safe patch apply confirmation,
+- and validation command summaries.
 
 ## Commands
 
@@ -98,6 +100,40 @@ The sidebar supports:
 - `RepoForge: Save Task Profile`
 - `RepoForge: Load Task Profile`
 - `RepoForge: Search Files`
+- `RepoForge: Parse Patch From Clipboard`
+- `RepoForge: Preview Patch`
+- `RepoForge: Apply Last Patch`
+- `RepoForge: Run Validation`
+- `RepoForge: Open Last Patch`
+- `RepoForge: Open Last Validation`
+
+## Patch + Validation Workflow
+
+RepoForge v0.4 adds an explicit after-model workflow for patch review and verification:
+
+1. Copy a model response or raw unified diff to the clipboard.
+2. Run `RepoForge: Parse Patch From Clipboard`.
+3. Run `RepoForge: Preview Patch`.
+4. Review the summary in the sidebar or the generated Markdown preview.
+5. Run `RepoForge: Apply Last Patch` and confirm the apply step.
+6. Run `RepoForge: Run Validation` and confirm the selected command.
+7. Inspect the saved patch and validation artifacts under `.repoforge/`.
+
+The patch workflow:
+
+- parses unified diffs from raw text or fenced `diff` blocks,
+- saves the extracted patch and preview artifacts under `.repoforge/`,
+- uses `git apply --check` before any apply attempt,
+- blocks patches with parser diagnostics or paths outside the workspace,
+- and does not stage, commit, or resolve conflicts.
+
+The validation workflow:
+
+- shows detected repository validation commands,
+- only runs after an explicit user confirmation,
+- captures stdout, stderr, exit code, and duration,
+- saves a trimmed JSON result plus Markdown summary,
+- and never auto-runs as part of patch apply.
 
 ## Modes
 
@@ -127,16 +163,30 @@ RepoForge writes its artifacts under `.repoforge/`:
 ├── last-context.md
 ├── last-context.json
 ├── last-handoff.md
+├── last-patch.diff
+├── last-patch-preview.json
+├── last-patch-preview.md
+├── last-patch-result.json
+├── last-validation.json
+├── last-validation.md
 ├── profiles.json
+├── tmp/
+│   └── patch-<timestamp>.diff
 └── history/
     ├── context-<timestamp>.md
     ├── context-<timestamp>.json
-    └── handoff-<timestamp>.md
+    ├── handoff-<timestamp>.md
+    ├── patch-<timestamp>.diff
+    ├── patch-<timestamp>-preview.json
+    ├── patch-<timestamp>-preview.md
+    ├── patch-<timestamp>-result.json
+    ├── validation-<timestamp>.json
+    └── validation-<timestamp>.md
 ```
 
 `last-context.md` and `last-context.json` are kept for backward compatibility.
 
-`last-handoff.md` and the `history/` copies make it easy to inspect what was generated after the fact.
+`last-handoff.md`, patch artifacts, validation results, and the `history/` copies make it easy to inspect what happened after the fact.
 
 ## Parser Support
 
@@ -234,7 +284,10 @@ It also loads ignore rules from the workspace root:
 - No network calls, AI API calls, or built-in chat interface.
 - No direct OpenCode, Continue, LM Studio, or Codex integration yet.
 - Handoff is copy/save based.
-- No patch application yet.
+- Patch application requires a Git repository and uses `git apply`.
+- Patch application does not stage, commit, or resolve conflicts.
+- Validation commands only run after an explicit user confirmation.
+- Validation history trims large stdout and stderr streams to keep `.repoforge` artifacts small.
 - Extension-host integration tests are not wired into the current npm test script yet.
 
 ## Roadmap
@@ -245,6 +298,6 @@ It also loads ignore rules from the workspace root:
 - Richer file picker, search, per-file include mode editing, and live token budget controls.
 - Extension-host integration test harness.
 - Direct LM Studio streaming.
-- Patch parsing and application.
-- Test runner integration.
+- More resilient patch conflict handling and partial apply workflows.
+- Richer validation profiles and multi-command pipelines.
 - Resource monitor for RAM, VRAM, and context pressure.

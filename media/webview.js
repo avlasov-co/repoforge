@@ -13,7 +13,9 @@
     selectedFiles: document.getElementById("selectedFiles"),
     tokenBudget: document.getElementById("tokenBudget"),
     scanStatus: document.getElementById("scanStatus"),
-    profiles: document.getElementById("profiles")
+    profiles: document.getElementById("profiles"),
+    patchSummary: document.getElementById("patchSummary"),
+    validationSummary: document.getElementById("validationSummary")
   };
 
   function post(message) {
@@ -41,6 +43,12 @@
   document.getElementById("copyPack").addEventListener("click", () => post({ type: "copyPack" }));
   document.getElementById("openLastPack").addEventListener("click", () => post({ type: "openLastPack" }));
   document.getElementById("clearSelection").addEventListener("click", () => post({ type: "clearSelection" }));
+  document.getElementById("parsePatchFromClipboard").addEventListener("click", () => post({ type: "parsePatchFromClipboard" }));
+  document.getElementById("previewPatch").addEventListener("click", () => post({ type: "previewPatch" }));
+  document.getElementById("applyLastPatch").addEventListener("click", () => post({ type: "applyLastPatch" }));
+  document.getElementById("runValidation").addEventListener("click", () => post({ type: "runValidation" }));
+  document.getElementById("openLastPatch").addEventListener("click", () => post({ type: "openLastPatch" }));
+  document.getElementById("openLastValidation").addEventListener("click", () => post({ type: "openLastValidation" }));
   document.getElementById("saveTaskProfile").addEventListener("click", () => {
     const name = prompt("Profile name");
     if (name) post({ type: "saveTaskProfile", name });
@@ -69,6 +77,8 @@
     renderSelected();
     renderBudget();
     renderProfiles();
+    renderPatchSummary();
+    renderValidationSummary();
     if (state.scanSummary) els.scanStatus.textContent = state.scanSummary;
   }
 
@@ -164,6 +174,29 @@
       div.textContent = `${profile.name}: ${profile.mode}, ${profile.contextLimit}`;
       els.profiles.appendChild(div);
     }
+  }
+
+  function renderPatchSummary() {
+    const preview = state.patchPreview;
+    if (!preview) {
+      els.patchSummary.textContent = "No patch parsed yet.";
+      els.patchSummary.className = "muted";
+      return;
+    }
+    const diagnostics = preview.diagnostics && preview.diagnostics.length ? ` · diagnostics ${preview.diagnostics.length}` : "";
+    els.patchSummary.className = "budget";
+    els.patchSummary.textContent = `${preview.files.length} files · +${preview.totalAdditions} / -${preview.totalDeletions}${diagnostics}`;
+  }
+
+  function renderValidationSummary() {
+    const result = state.validationResult;
+    if (!result) {
+      els.validationSummary.textContent = "No validation run yet.";
+      els.validationSummary.className = "muted";
+      return;
+    }
+    els.validationSummary.className = "budget";
+    els.validationSummary.textContent = `${result.command} · ${result.passed ? "passed" : "failed"} · ${result.durationMs}ms · exit ${result.exitCode === null ? "null" : result.exitCode}`;
   }
 
   function debounce(fn, delay) {

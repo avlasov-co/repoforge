@@ -129,3 +129,13 @@ button.active {
 .warnings {
   color: var(--vscode-editorWarning-foreground);
 }
+
+.summary-block {
+  margin-top: 10px;
+}
+
+.summary-title {
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}

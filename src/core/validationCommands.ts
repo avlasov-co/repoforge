@@ -9,8 +9,14 @@ export async function detectValidationCommands(repoRoot: string): Promise<string
     if (parsed.scripts?.test) {
       commands.push("npm test");
     }
+    if (parsed.scripts?.compile) {
+      commands.push("npm run compile");
+    }
     if (parsed.scripts?.build) {
       commands.push("npm run build");
+    }
+    if (parsed.scripts?.lint) {
+      commands.push("npm run lint");
     }
   } catch {
     // Optional.

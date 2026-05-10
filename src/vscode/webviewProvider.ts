@@ -1,4 +1,6 @@
 import * as vscode from "vscode";
+import { readLastPatchPreview } from "../core/patch/patchHistory";
+import { readLastValidationResult } from "../core/validation/validationHistory";
 import { buildContextPreview } from "../core/contextPreview";
 import { getGitDiffSummary } from "../core/git/gitDiff";
 import { scoreRelevantFiles, suggestRelevantFiles } from "../core/relevance";
@@ -122,7 +124,9 @@ export class RepoForgeWebviewProvider implements vscode.WebviewViewProvider {
         limit: 30
       }),
       profiles: repoRoot ? await listTaskProfiles(repoRoot) : [],
-      lastPackPath: this.state.getLastPackPath()
+      lastPackPath: this.state.getLastPackPath(),
+      patchPreview: repoRoot ? await readLastPatchPreview(repoRoot) : undefined,
+      validationResult: repoRoot ? await readLastValidationResult(repoRoot) : undefined
     };
   }
 }

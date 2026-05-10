@@ -61,6 +61,26 @@ export function getWebviewHtml(webview: vscode.Webview, extensionUri: vscode.Uri
     </section>
 
     <section>
+      <h2>Patch + Validation</h2>
+      <div class="grid">
+        <button id="parsePatchFromClipboard">Parse Patch From Clipboard</button>
+        <button id="previewPatch">Preview Patch</button>
+        <button id="applyLastPatch">Apply Last Patch</button>
+        <button id="runValidation">Run Validation</button>
+        <button id="openLastPatch">Open Last Patch</button>
+        <button id="openLastValidation">Open Last Validation</button>
+      </div>
+      <div class="summary-block">
+        <div class="summary-title">Patch Summary</div>
+        <div id="patchSummary" class="muted">No patch parsed yet.</div>
+      </div>
+      <div class="summary-block">
+        <div class="summary-title">Validation Summary</div>
+        <div id="validationSummary" class="muted">No validation run yet.</div>
+      </div>
+    </section>
+
+    <section>
       <h2>Search files</h2>
       <input id="searchFiles" type="search" placeholder="path, language, symbol, import">
       <div id="suggestedFiles" class="list muted">No scan results yet.</div>
