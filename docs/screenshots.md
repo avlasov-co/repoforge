@@ -1,9 +1,7 @@
 # Screenshots
 
-Preview assets for the public release:
+Single release workflow capture:
 
-- [Sidebar overview](./screenshots/sidebar-overview.svg)
-- [Token budget preview](./screenshots/token-budget-preview.svg)
-- [Codex handoff](./screenshots/codex-handoff.svg)
+- [RepoForge release workflow overview](./screenshots/release-overview.png)
 
-These are lightweight docs visuals, not product claims. Replace them with real captures or GIFs when you have a stable demo environment.
+This is the only screenshot asset kept in the release docs so the repo stays simple and the README points at one real capture.

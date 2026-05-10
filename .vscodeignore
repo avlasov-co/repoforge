@@ -2,6 +2,7 @@
 test/**
 src/**
 node_modules/**
+.venv-screenshot/**
 .repoforge/**
 coverage/**
 *.log

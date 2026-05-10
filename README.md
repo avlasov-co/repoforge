@@ -64,13 +64,9 @@ Open the repository in VS Code and launch **Run Extension** from the debug panel
 
 ## Visual Tour
 
-These lightweight preview images show the release-time workflow layout. They are intentionally simple docs assets and can be replaced with real captures later.
+This single composite capture shows the main release workflow in one place: sidebar, token budget, generated handoff, patch preview, and validation results.
 
-![RepoForge sidebar overview](docs/screenshots/sidebar-overview.svg)
-
-![RepoForge token budget preview](docs/screenshots/token-budget-preview.svg)
-
-![RepoForge Codex handoff preview](docs/screenshots/codex-handoff.svg)
+![RepoForge release workflow overview](docs/screenshots/release-overview.png)
 
 ## Sidebar Workflow
 
