@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="720" viewBox="0 0 1200 720" role="img" aria-labelledby="title desc">
+  <title id="title">RepoForge token budget preview</title>
+  <desc id="desc">A stylized preview of selected files, token bars, and budget tradeoffs inside RepoForge.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#111827"/>
+      <stop offset="100%" stop-color="#020617"/>
+    </linearGradient>
+    <linearGradient id="green" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#10b981"/>
+      <stop offset="100%" stop-color="#34d399"/>
+    </linearGradient>
+    <linearGradient id="amber" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#f59e0b"/>
+      <stop offset="100%" stop-color="#fbbf24"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="720" fill="url(#bg)"/>
+  <rect x="70" y="70" width="1060" height="580" rx="28" fill="#0f172a" stroke="#334155" stroke-width="2"/>
+  <text x="102" y="124" fill="#e5e7eb" font-family="Inter, Segoe UI, sans-serif" font-size="28" font-weight="800">Token budget preview</text>
+  <text x="102" y="154" fill="#94a3b8" font-family="Inter, Segoe UI, sans-serif" font-size="14">The optimizer keeps the highest-value context visible and shows what was trimmed.</text>
+  <rect x="102" y="188" width="320" height="388" rx="20" fill="#111827" stroke="#334155"/>
+  <rect x="446" y="188" width="624" height="388" rx="20" fill="#111827" stroke="#334155"/>
+  <text x="126" y="224" fill="#e5e7eb" font-family="Inter, Segoe UI, sans-serif" font-size="18" font-weight="700">Selected files</text>
+  <rect x="126" y="248" width="272" height="54" rx="12" fill="#0b1220" stroke="#334155"/>
+  <rect x="126" y="314" width="272" height="54" rx="12" fill="#0b1220" stroke="#334155"/>
+  <rect x="126" y="380" width="272" height="54" rx="12" fill="#0b1220" stroke="#334155"/>
+  <rect x="126" y="446" width="272" height="54" rx="12" fill="#0b1220" stroke="#334155"/>
+  <text x="144" y="281" fill="#dbeafe" font-family="ui-monospace, SFMono-Regular, monospace" font-size="13">src/core/contextPack.ts</text>
+  <text x="144" y="347" fill="#dbeafe" font-family="ui-monospace, SFMono-Regular, monospace" font-size="13">src/vscode/handoffCommands.ts</text>
+  <text x="144" y="413" fill="#dbeafe" font-family="ui-monospace, SFMono-Regular, monospace" font-size="13">test/handoffFormatters.test.ts</text>
+  <text x="144" y="479" fill="#dbeafe" font-family="ui-monospace, SFMono-Regular, monospace" font-size="13">README.md</text>
+  <text x="470" y="224" fill="#e5e7eb" font-family="Inter, Segoe UI, sans-serif" font-size="18" font-weight="700">Budget breakdown</text>
+  <text x="470" y="256" fill="#94a3b8" font-family="Inter, Segoe UI, sans-serif" font-size="13">Target: 24k tokens | Reserved output: 2k | Estimated input: 17.8k</text>
+  <rect x="470" y="284" width="560" height="22" rx="11" fill="#1f2937"/>
+  <rect x="470" y="284" width="400" height="22" rx="11" fill="url(#green)"/>
+  <rect x="878" y="284" width="88" height="22" rx="11" fill="url(#amber)"/>
+  <text x="470" y="330" fill="#e5e7eb" font-family="Inter, Segoe UI, sans-serif" font-size="16" font-weight="700">Optimizer result</text>
+  <rect x="470" y="348" width="560" height="60" rx="14" fill="#0b1220" stroke="#334155"/>
+  <text x="492" y="374" fill="#d1fae5" font-family="Inter, Segoe UI, sans-serif" font-size="13">Kept: changed files, selected full files, repo map, project memory</text>
+  <text x="492" y="394" fill="#fde68a" font-family="Inter, Segoe UI, sans-serif" font-size="13">Trimmed: low-priority snippets downgraded to code map entries</text>
+  <text x="470" y="442" fill="#e5e7eb" font-family="Inter, Segoe UI, sans-serif" font-size="16" font-weight="700">Warnings</text>
+  <rect x="470" y="460" width="560" height="90" rx="14" fill="#0b1220" stroke="#334155"/>
+  <text x="492" y="488" fill="#94a3b8" font-family="ui-monospace, SFMono-Regular, monospace" font-size="13">- context budget nearly full</text>
+  <text x="492" y="510" fill="#94a3b8" font-family="ui-monospace, SFMono-Regular, monospace" font-size="13">- one optional snippet dropped after downgrade</text>
+  <text x="492" y="532" fill="#94a3b8" font-family="ui-monospace, SFMono-Regular, monospace" font-size="13">- validation commands preserved for handoff</text>
+</svg>

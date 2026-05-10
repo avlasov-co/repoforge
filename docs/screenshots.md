@@ -1,11 +1,9 @@
 # Screenshots
 
-Placeholder capture list for the public release.
+Preview assets for the public release:
 
-- Sidebar overview
-- File search
-- Token budget preview
-- Codex handoff
-- Local Qwen handoff
+- [Sidebar overview](./screenshots/sidebar-overview.svg)
+- [Token budget preview](./screenshots/token-budget-preview.svg)
+- [Codex handoff](./screenshots/codex-handoff.svg)
 
-Actual screenshots can be added later under `docs/screenshots/` or linked here once captured.
+These are lightweight docs visuals, not product claims. Replace them with real captures or GIFs when you have a stable demo environment.

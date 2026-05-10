@@ -4,6 +4,20 @@ RepoForge is a local-first VS Code extension for building high-signal repository
 
 It scans a workspace, builds a compact code map, tracks selected files, estimates token usage, reads git changes, and writes structured handoff packs to `.repoforge/` without calling external AI APIs.
 
+## Why RepoForge Exists
+
+Coding agents are fast at code generation and weak at repository orientation.
+
+RepoForge exists to narrow that gap by making the handoff itself a first-class artifact:
+
+- the task is explicit,
+- the file selection is visible,
+- the token budget is measurable,
+- the git context is summarized,
+- and the final output can be inspected before any agent sees it.
+
+The goal is not more automation. The goal is better input quality.
+
 ## What It Is
 
 RepoForge is a context-preparation tool for developers who work with coding agents and want repeatable, inspectable repository handoffs.
@@ -48,6 +62,16 @@ npm test
 
 Open the repository in VS Code and launch **Run Extension** from the debug panel to run the extension host locally.
 
+## Visual Tour
+
+These lightweight preview images show the release-time workflow layout. They are intentionally simple docs assets and can be replaced with real captures later.
+
+![RepoForge sidebar overview](docs/screenshots/sidebar-overview.svg)
+
+![RepoForge token budget preview](docs/screenshots/token-budget-preview.svg)
+
+![RepoForge Codex handoff preview](docs/screenshots/codex-handoff.svg)
+
 ## Sidebar Workflow
 
 The RepoForge sidebar is a static VS Code webview with no React or bundler.
@@ -80,6 +104,19 @@ The sidebar supports:
 - patch parsing and preview actions,
 - safe patch apply confirmation,
 - and validation command summaries.
+
+## Demo Workflow
+
+One realistic loop from repo to agent handoff:
+
+1. Run `RepoForge: Scan Repo`.
+2. Open the sidebar and enter the task.
+3. Search for the relevant files and add the active editor.
+4. Switch the important files to full or snippet mode.
+5. Generate a Codex pack for a compact implementation handoff.
+6. Generate a Local Qwen/OpenCode pack when you want longer reasoning context.
+7. Copy the generated handoff into the target agent or editor workflow.
+8. If you get a patch back, parse it, preview it, apply it, and run validation.
 
 ## Commands
 
@@ -134,6 +171,12 @@ The validation workflow:
 - captures stdout, stderr, exit code, and duration,
 - saves a trimmed JSON result plus Markdown summary,
 - and never auto-runs as part of patch apply.
+
+## GitHub Placement
+
+Pin this repository on GitHub after release so the README, docs, and release assets are the first thing visitors see.
+
+That keeps the public presentation focused on the workflow and the installed artifact instead of a loose source-tree landing page.
 
 ## Modes
 
