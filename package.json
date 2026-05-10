@@ -1,0 +1,156 @@
+{
+  "name": "repoforge",
+  "displayName": "RepoForge",
+  "description": "Local-first repository context packs for coding agents.",
+  "version": "0.3.0",
+  "publisher": "avlasov-co",
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/avlasov-co/repoforge.git"
+  },
+  "keywords": [
+    "ai",
+    "coding agents",
+    "repo context",
+    "codex",
+    "opencode",
+    "continue",
+    "qwen",
+    "local models"
+  ],
+  "activationEvents": [
+    "onCommand:repoforge.scanRepo",
+    "onCommand:repoforge.generateRepoMap",
+    "onCommand:repoforge.generateCodexPack",
+    "onCommand:repoforge.generateLocalQwenPack",
+    "onCommand:repoforge.addCurrentFileToContext",
+    "onCommand:repoforge.addOpenEditorsToContext",
+    "onCommand:repoforge.clearSelectedContext",
+    "onCommand:repoforge.openSidebar",
+    "onCommand:repoforge.writeProjectMemory",
+    "onCommand:repoforge.openLastContextPack",
+    "onCommand:repoforge.copyLastPack",
+    "onCommand:repoforge.copyCodexHandoff",
+    "onCommand:repoforge.copyLocalQwenHandoff",
+    "onCommand:repoforge.copyContinueHandoff",
+    "onCommand:repoforge.saveTaskProfile",
+    "onCommand:repoforge.loadTaskProfile",
+    "onCommand:repoforge.searchFiles",
+    "onView:repoforgeContext"
+  ],
+  "main": "./dist/src/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "repoforge.scanRepo",
+        "title": "RepoForge: Scan Repo"
+      },
+      {
+        "command": "repoforge.generateRepoMap",
+        "title": "RepoForge: Generate Repo Map"
+      },
+      {
+        "command": "repoforge.generateCodexPack",
+        "title": "RepoForge: Generate Codex Pack"
+      },
+      {
+        "command": "repoforge.generateLocalQwenPack",
+        "title": "RepoForge: Generate Local Qwen Pack"
+      },
+      {
+        "command": "repoforge.addCurrentFileToContext",
+        "title": "RepoForge: Add Current File To Context"
+      },
+      {
+        "command": "repoforge.addOpenEditorsToContext",
+        "title": "RepoForge: Add Open Editors To Context"
+      },
+      {
+        "command": "repoforge.clearSelectedContext",
+        "title": "RepoForge: Clear Selected Context"
+      },
+      {
+        "command": "repoforge.openSidebar",
+        "title": "RepoForge: Open Sidebar"
+      },
+      {
+        "command": "repoforge.writeProjectMemory",
+        "title": "RepoForge: Write Project Memory"
+      },
+      {
+        "command": "repoforge.openLastContextPack",
+        "title": "RepoForge: Open Last Context Pack"
+      },
+      {
+        "command": "repoforge.copyLastPack",
+        "title": "RepoForge: Copy Last Pack"
+      },
+      {
+        "command": "repoforge.copyCodexHandoff",
+        "title": "RepoForge: Copy Codex Handoff"
+      },
+      {
+        "command": "repoforge.copyLocalQwenHandoff",
+        "title": "RepoForge: Copy Local Qwen/OpenCode Handoff"
+      },
+      {
+        "command": "repoforge.copyContinueHandoff",
+        "title": "RepoForge: Copy Continue Handoff"
+      },
+      {
+        "command": "repoforge.saveTaskProfile",
+        "title": "RepoForge: Save Task Profile"
+      },
+      {
+        "command": "repoforge.loadTaskProfile",
+        "title": "RepoForge: Load Task Profile"
+      },
+      {
+        "command": "repoforge.searchFiles",
+        "title": "RepoForge: Search Files"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "repoforge",
+          "title": "RepoForge",
+          "icon": "resources/repoforge.svg"
+        }
+      ]
+    },
+    "views": {
+      "repoforge": [
+        {
+          "id": "repoforgeContext",
+          "name": "RepoForge Context",
+          "type": "webview"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "test": "vitest run",
+    "lint": "echo \"lint not configured yet\"",
+    "package": "vsce package",
+    "prepackage": "npm run compile && npm test"
+  },
+  "devDependencies": {
+    "@vscode/vsce": "^3.6.2",
+    "@types/node": "^20.12.12",
+    "@types/vscode": "^1.90.0",
+    "typescript": "^5.4.5",
+    "vitest": "^4.1.5"
+  },
+  "dependencies": {
+    "js-tiktoken": "^1.0.21"
+  }
+}

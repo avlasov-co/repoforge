@@ -1,0 +1,10 @@
+node_modules/
+dist/
+out/
+coverage/
+.vscode-test/
+.repoforge/
+*.vsix
+*.log
+.DS_Store
+npm-debug.log*

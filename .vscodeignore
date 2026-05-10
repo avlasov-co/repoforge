@@ -1,0 +1,14 @@
+.vscode/**
+test/**
+src/**
+node_modules/**
+.repoforge/**
+coverage/**
+*.log
+*.map
+tsconfig.json
+vitest.config.*
+docs/screenshots/raw/**
+dist/test/**
+dist/src/vscode/extensionTests.js
+dist/src/vscode/extensionTests.js.map
