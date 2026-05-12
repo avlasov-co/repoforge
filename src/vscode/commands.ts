@@ -3,11 +3,11 @@ import * as path from "path";
 import * as vscode from "vscode";
 import { buildContextPack, saveContextPack } from "../core/contextPack";
 import { extractCodeMap } from "../core/codeMap";
+import { ContextPreviewResult } from "../core/contextPreview";
 import { ensureProjectMemory } from "../core/projectMemory";
 import { languageForPath, normalizePath, scanRepo } from "../core/repoScanner";
 import { estimateTokens } from "../core/tokenEstimator";
 import { ContextMode } from "../core/types";
-import { formatPack } from "../core/contextPack";
 import { HandoffKind } from "../formatters/handoffTypes";
 import { copyTextToClipboard } from "./clipboard";
 import { searchFiles } from "./filePicker";
@@ -15,7 +15,7 @@ import { formatHandoff, saveHandoff } from "./handoffCommands";
 import { RepoForgePatchCommands } from "./patchCommands";
 import { listTaskProfiles, saveTaskProfile } from "./taskProfiles";
 import { RepoForgeValidationCommands } from "./validationCommands";
-import { WebviewToExtensionMessage } from "./webviewMessages";
+import { IncludeMode, SidebarIncludeMode, WebviewState, WebviewToExtensionMessage } from "./webviewMessages";
 import { RepoForgeState } from "./workspaceState";
 import { RepoForgeWebviewProvider } from "./webviewProvider";
 
@@ -303,6 +303,8 @@ export class RepoForgeCommands {
       await this.state.setTask(message.task);
     } else if (message.type === "setMode") {
       await this.state.setMode(message.mode);
+    } else if (message.type === "setDefaultIncludeMode") {
+      await this.state.setDefaultIncludeMode(message.includeMode);
     } else if (message.type === "setContextLimit") {
       await this.state.setTokenLimit(message.limit);
     } else if (message.type === "setTokenizerProfile") {
@@ -311,6 +313,8 @@ export class RepoForgeCommands {
       await this.state.setReservedOutput(message.tokens);
     } else if (message.type === "scanRepo") {
       await this.scanRepo();
+    } else if (message.type === "previewContext") {
+      await this.previewContext();
     } else if (message.type === "addFile") {
       if (message.path === "__current__") {
         await this.addCurrentFile();
@@ -327,6 +331,10 @@ export class RepoForgeCommands {
       await this.clearSelection();
     } else if (message.type === "generatePack") {
       await this.generatePack(this.state.getMode());
+    } else if (message.type === "generateHandoff") {
+      await this.generateHandoff();
+    } else if (message.type === "openInAssistant") {
+      await this.openInAssistant();
     } else if (message.type === "copyPack") {
       await this.copyLastPack();
     } else if (message.type === "openLastPack") {
@@ -400,6 +408,59 @@ export class RepoForgeCommands {
     await this.validationCommands.openLastValidation(repoRoot);
   }
 
+  private async previewContext(): Promise<void> {
+    const repoRoot = this.requireWorkspaceRoot();
+    if (!repoRoot) {
+      return;
+    }
+    if (!this.state.getLastScan()) {
+      await this.scanRepo();
+    }
+    const snapshot = await this.webviewProvider?.getStateSnapshot();
+    if (!snapshot?.preview) {
+      vscode.window.showErrorMessage("RepoForge: no context preview is available yet.");
+      return;
+    }
+
+    const previewPath = path.join(repoRoot, ".repoforge", "last-context-preview.md");
+    await fs.mkdir(path.dirname(previewPath), { recursive: true });
+    await fs.writeFile(previewPath, formatContextPreviewMarkdown(snapshot), "utf8");
+    await this.openFile(previewPath);
+  }
+
+  private async generateHandoff(): Promise<void> {
+    const pack = await this.buildPackForCurrentState(this.state.getMode());
+    if (!pack) {
+      return;
+    }
+    const savedPack = await saveContextPack(pack);
+    const handoffKind = this.handoffKindForMode(pack.mode);
+    const savedHandoff = await saveHandoff(pack, handoffKind);
+    await this.state.setTask(pack.task);
+    await this.state.setMode(pack.mode);
+    await this.state.setLastPackPath(savedPack.markdownPath);
+    await this.state.setLastHandoffPath(savedHandoff.markdownPath);
+    await this.state.setLastTokenBudget(pack.tokenBudget);
+    await this.openFile(savedHandoff.markdownPath);
+    await this.webviewProvider?.refresh();
+  }
+
+  private async openInAssistant(): Promise<void> {
+    const mode = this.state.getMode();
+    const handoffKind = this.handoffKindForMode(mode);
+    const pack = await this.buildPackForCurrentState(mode);
+    if (!pack) {
+      return;
+    }
+    const savedHandoff = await saveHandoff(pack, handoffKind);
+    await this.state.setTask(pack.task);
+    await this.state.setLastHandoffPath(savedHandoff.markdownPath);
+    await this.state.setLastTokenBudget(pack.tokenBudget);
+    await copyTextToClipboard(formatHandoff(pack, handoffKind), `${handoffKind} handoff`);
+    await this.openFile(savedHandoff.markdownPath);
+    await this.webviewProvider?.refresh();
+  }
+
   private async buildPackForCurrentState(mode: ContextMode) {
     const repoRoot = this.requireWorkspaceRoot();
     if (!repoRoot) {
@@ -415,7 +476,7 @@ export class RepoForgeCommands {
       repoRoot,
       tokenLimit: this.state.getTokenLimit(),
       reservedOutput: this.state.getReservedOutput(mode === "local-qwen" ? 16000 : 8000),
-      selectedFiles: this.state.getSelectedFiles(),
+      selectedFiles: this.effectiveSelections(await this.webviewProvider?.getStateSnapshot()),
       tokenizerProfile: this.state.getTokenizerProfile()
     });
   }
@@ -450,6 +511,75 @@ export class RepoForgeCommands {
     const document = await vscode.workspace.openTextDocument(vscode.Uri.file(filePath));
     await vscode.window.showTextDocument(document, { preview: false });
   }
+
+  private effectiveSelections(snapshot?: WebviewState) {
+    const selectedFiles = this.state.getSelectedFiles();
+    if (this.state.getDefaultIncludeMode() !== "smart" || !snapshot?.preview?.likelySelections.length) {
+      return selectedFiles;
+    }
+
+    const byPath = new Map(selectedFiles.map((item) => [item.path, item]));
+    for (const selection of snapshot.preview.likelySelections) {
+      if (!byPath.has(selection.path)) {
+        byPath.set(selection.path, selection);
+      }
+    }
+    return [...byPath.values()].sort((a, b) => a.path.localeCompare(b.path));
+  }
+}
+
+function formatContextPreviewMarkdown(state: WebviewState): string {
+  const preview = state.preview as ContextPreviewResult;
+  const breakdown = preview.breakdown.length
+    ? preview.breakdown.map((item) => `- ${item.path}: ${item.estimatedTokens} tokens (${item.includeMode})`).join("\n")
+    : "- No files selected.";
+  const warnings = preview.warnings.length ? preview.warnings.map((item) => `- ${item}`).join("\n") : "- None";
+  const selected = getVisibleSelections(state.defaultIncludeMode, state.selectedFiles, preview)
+    .map((item) => `- ${item.path}${item.score ? ` (${Math.round(item.score)})` : ""}`)
+    .join("\n") || "- None";
+
+  return [
+    "# RepoForge Context Preview",
+    "",
+    `Task: ${state.task || "(not set)"}`,
+    `Mode: ${labelForMode(state.mode)}`,
+    `Budget: ${preview.budget.usedInput.toLocaleString()} / ${preview.budget.limit.toLocaleString()} tokens`,
+    "",
+    "## Breakdown",
+    breakdown,
+    "",
+    "## Selected Files",
+    selected,
+    "",
+    "## Warnings",
+    warnings,
+    "",
+    `Estimated final: ${Math.max(0, preview.budget.usedInput).toLocaleString()} tokens`
+  ].join("\n");
+}
+
+function getVisibleSelections(
+  includeMode: SidebarIncludeMode,
+  selectedFiles: WebviewState["selectedFiles"],
+  preview: ContextPreviewResult
+) {
+  if (includeMode !== "smart") {
+    return selectedFiles;
+  }
+  const byPath = new Map(selectedFiles.map((item) => [item.path, item]));
+  for (const item of preview.likelySelections) {
+    if (!byPath.has(item.path)) {
+      byPath.set(item.path, item);
+    }
+  }
+  return [...byPath.values()];
+}
+
+function labelForMode(mode: ContextMode): string {
+  if (mode === "local-qwen") {
+    return "Local Qwen / OpenCode";
+  }
+  return mode === "continue" ? "Continue" : "Codex";
 }
 
 export async function mapCurrentDocument(): Promise<void> {

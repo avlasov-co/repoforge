@@ -2,6 +2,7 @@ import * as path from "path";
 import * as vscode from "vscode";
 import { ContextMode, ContextSelection, RepoScanResult, TokenBudget, TokenizerProfile } from "../core/types";
 import { normalizePath } from "../core/repoScanner";
+import { SidebarIncludeMode } from "./webviewMessages";
 
 const SELECTED_FILES_KEY = "repoforge.selectedFiles";
 const TASK_KEY = "repoforge.task";
@@ -14,6 +15,7 @@ const LAST_HANDOFF_KEY = "repoforge.lastHandoffPath";
 const LAST_SCAN_KEY = "repoforge.lastScanSummary";
 const LAST_SCAN_RESULT_KEY = "repoforge.lastScanResult";
 const LAST_BUDGET_KEY = "repoforge.lastTokenBudget";
+const DEFAULT_INCLUDE_MODE_KEY = "repoforge.defaultIncludeMode";
 
 export class RepoForgeState {
   constructor(private readonly context: vscode.ExtensionContext) {}
@@ -92,6 +94,14 @@ export class RepoForgeState {
 
   async setMode(mode: ContextMode): Promise<void> {
     await this.context.workspaceState.update(MODE_KEY, mode);
+  }
+
+  getDefaultIncludeMode(): SidebarIncludeMode {
+    return this.context.workspaceState.get<SidebarIncludeMode>(DEFAULT_INCLUDE_MODE_KEY, "smart");
+  }
+
+  async setDefaultIncludeMode(mode: SidebarIncludeMode): Promise<void> {
+    await this.context.workspaceState.update(DEFAULT_INCLUDE_MODE_KEY, mode);
   }
 
   getTokenizerProfile(): TokenizerProfile {

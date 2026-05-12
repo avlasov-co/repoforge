@@ -1,5 +1,19 @@
 # Changelog
 
+## v0.4.4
+
+### Fixed
+- Reworked the sidebar to match the documented release workflow more closely.
+- Fixed broken sidebar button wiring so actions dispatch reliably from the webview.
+- Added context preview and handoff actions that align with the updated sidebar flow.
+
+## v0.4.3
+
+### Fixed
+- Packaged runtime dependencies into the VSIX so activation can load required modules.
+- Moved `typescript` from `devDependencies` to runtime `dependencies` because the extension imports it at runtime.
+- Pinned runtime dependencies to `js-tiktoken` `1.0.21` and `typescript` `5.4.5`.
+
 ## v0.4.0
 
 ### Added

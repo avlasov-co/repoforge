@@ -1,15 +1,19 @@
-<svg width="1024" height="1024" viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <g stroke="#111111" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M264 144H604L792 332V856C792 892.2 762.2 922 726 922H264C227.8 922 198 892.2 198 856V210C198 173.8 227.8 144 264 144Z" stroke-width="42"/>
-    <path d="M604 144V332H792" stroke-width="42"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024" role="img" aria-label="Document with git branch icon">
+  <title>Document Git Branch Icon</title>
+  <g fill="none" stroke="#000" stroke-width="52" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Document outline -->
+    <path d="M292 150H596L768 322V832C768 858 747 880 720 880H292C266 880 244 858 244 832V198C244 172 266 150 292 150Z"/>
+    <!-- Folded corner -->
+    <path d="M596 150V286C596 312 618 334 644 334H768"/>
 
-    <path d="M366 380V722" stroke-width="52"/>
-    <path d="M366 520C366 520 366 666 366 766" stroke-width="52"/>
-    <path d="M366 520C366 520 438 722 562 722C658 722 722 652 754 566" stroke-width="52"/>
+    <!-- Git branch connectors -->
+    <path d="M400 380V715"/>
+    <path d="M400 570C470 570 500 562 532 524C552 500 566 462 610 462"/>
 
-    <circle cx="366" cy="372" r="58" fill="#ffffff" stroke-width="46"/>
-    <circle cx="366" cy="520" r="58" fill="#ffffff" stroke-width="46"/>
-    <circle cx="366" cy="766" r="58" fill="#ffffff" stroke-width="46"/>
-    <circle cx="628" cy="546" r="58" fill="#ffffff" stroke-width="46"/>
+    <!-- Git nodes -->
+    <circle cx="400" cy="330" r="42" fill="#fff"/>
+    <circle cx="400" cy="570" r="42" fill="#fff"/>
+    <circle cx="400" cy="760" r="42" fill="#fff"/>
+    <circle cx="610" cy="462" r="42" fill="#fff"/>
   </g>
 </svg>

@@ -1,4 +1,5 @@
 import * as vscode from "vscode";
+import * as path from "path";
 import { readLastPatchPreview } from "../core/patch/patchHistory";
 import { readLastValidationResult } from "../core/validation/validationHistory";
 import { buildContextPreview } from "../core/contextPreview";
@@ -31,13 +32,23 @@ export class RepoForgeWebviewProvider implements vscode.WebviewViewProvider {
     };
     webviewView.webview.html = getWebviewHtml(webviewView.webview, this.extensionUri);
     webviewView.webview.onDidReceiveMessage(async (message: WebviewToExtensionMessage) => {
-      if (message.type === "searchFiles") {
-        this.searchQuery = message.query;
+      try {
+        if (message.type === "searchFiles") {
+          this.searchQuery = message.query;
+        }
+        await this.handler?.(message);
+      } catch (error) {
+        const text = error instanceof Error ? error.message : String(error);
+        this.postError(`RepoForge sidebar action failed: ${text}`);
+        vscode.window.showErrorMessage(`RepoForge: ${text}`);
       }
-      await this.handler?.(message);
       await this.refresh();
     });
     void this.refresh();
+  }
+
+  async getStateSnapshot(): Promise<WebviewState> {
+    return this.buildState();
   }
 
   async refresh(): Promise<void> {
@@ -108,6 +119,7 @@ export class RepoForgeWebviewProvider implements vscode.WebviewViewProvider {
     return {
       task: this.state.getTask(),
       mode,
+      defaultIncludeMode: this.state.getDefaultIncludeMode(),
       contextLimit,
       reservedOutput,
       tokenizerProfile,
@@ -125,6 +137,9 @@ export class RepoForgeWebviewProvider implements vscode.WebviewViewProvider {
       }),
       profiles: repoRoot ? await listTaskProfiles(repoRoot) : [],
       lastPackPath: this.state.getLastPackPath(),
+      lastHandoffPath: this.state.getLastHandoffPath(),
+      lastPatchPath: repoRoot ? path.join(repoRoot, ".repoforge", "last-patch.diff") : undefined,
+      lastValidationPath: repoRoot ? path.join(repoRoot, ".repoforge", "last-validation.md") : undefined,
       patchPreview: repoRoot ? await readLastPatchPreview(repoRoot) : undefined,
       validationResult: repoRoot ? await readLastValidationResult(repoRoot) : undefined
     };

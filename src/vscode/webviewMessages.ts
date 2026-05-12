@@ -6,11 +6,13 @@ import { FileSearchResult } from "./filePicker";
 import { TaskProfile } from "./taskProfiles";
 
 export type IncludeMode = ContextSelection["includeMode"];
+export type SidebarIncludeMode = "smart" | Exclude<IncludeMode, "none">;
 
 export type WebviewToExtensionMessage =
   | { type: "scanRepo" }
   | { type: "setTask"; task: string }
   | { type: "setMode"; mode: ContextMode }
+  | { type: "setDefaultIncludeMode"; includeMode: SidebarIncludeMode }
   | { type: "setContextLimit"; limit: number }
   | { type: "setTokenizerProfile"; profile: TokenizerProfile }
   | { type: "setReservedOutput"; tokens: number }
@@ -18,7 +20,10 @@ export type WebviewToExtensionMessage =
   | { type: "addFile"; path: string; includeMode: IncludeMode }
   | { type: "removeFile"; path: string }
   | { type: "setIncludeMode"; path: string; includeMode: IncludeMode }
+  | { type: "previewContext" }
   | { type: "generatePack" }
+  | { type: "generateHandoff" }
+  | { type: "openInAssistant" }
   | { type: "copyPack" }
   | { type: "openLastPack" }
   | { type: "parsePatchFromClipboard" }
@@ -33,6 +38,7 @@ export type WebviewToExtensionMessage =
 export interface WebviewState {
   task: string;
   mode: ContextMode;
+  defaultIncludeMode: SidebarIncludeMode;
   contextLimit: number;
   reservedOutput: number;
   tokenizerProfile: TokenizerProfile;
@@ -43,6 +49,9 @@ export interface WebviewState {
   searchResults: FileSearchResult[];
   profiles: TaskProfile[];
   lastPackPath?: string;
+  lastHandoffPath?: string;
+  lastPatchPath?: string;
+  lastValidationPath?: string;
   patchPreview?: PatchPreview;
   validationResult?: PersistedValidationRunResult;
 }

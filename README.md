@@ -276,7 +276,6 @@ Priority order is:
 2. changed files,
 3. high-relevance suggestions,
 4. lower-priority optional context.
-
 When needed, RepoForge downgrades lower-priority full files to snippets, snippets to code maps, and low-priority code map entries to dropped entries. It records warnings instead of silently discarding important context.
 
 ## Task Profiles
