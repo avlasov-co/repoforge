@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.4.5
+
+### Changed
+- Bumped the extension version to `0.4.5` for the next GitHub release and VSIX package.
+
 ## v0.4.4
 
 ### Fixed
