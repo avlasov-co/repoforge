@@ -125,30 +125,30 @@
   function renderTokenBudget() {
     const preview = state.preview;
     if (!preview) {
-      els.tokenBudget.className = "stats-grid stats-grid-empty muted";
+      els.tokenBudget.className = "token-summary muted";
       els.tokenBudget.textContent = "No preview yet.";
       return;
     }
 
     const visibleSelections = getVisibleSelections();
-    const warnings = preview.warnings.length ? `<div class="warning-line">${preview.warnings.map(escapeHtml).join("<br>")}</div>` : "";
-    els.tokenBudget.className = "stats-grid";
+    const budget = preview.budget;
+    const usedPct = budget.limit > 0 ? Math.round((budget.usedInput / budget.limit) * 100) : 0;
+    const warnings = preview.warnings.length
+      ? preview.warnings.map((warning) => `<div class="warning-line">${escapeHtml(warning)}</div>`).join("")
+      : "";
+    els.tokenBudget.className = "token-summary";
     els.tokenBudget.innerHTML = `
-      <div class="stat-block">
-        <span class="stat-label">Budget</span>
-        <span class="stat-value">${formatNumber(preview.budget.usedInput)} / ${formatNumber(preview.budget.limit)} tokens</span>
+      <div class="token-line">
+        <strong>Budget:</strong> ${formatNumber(budget.usedInput)} / ${formatNumber(budget.limit)} tokens (${usedPct}%)
       </div>
-      <div class="stat-block">
-        <span class="stat-label">Remaining</span>
-        <span class="stat-value">${formatNumber(preview.budget.remainingInput)}</span>
+      <div class="token-line">
+        <strong>Est. Files:</strong> ${visibleSelections.length}
       </div>
-      <div class="stat-block">
-        <span class="stat-label">Est. Files</span>
-        <span class="stat-value">${visibleSelections.length}</span>
+      <div class="token-line">
+        <strong>Reserved Output:</strong> ${formatNumber(budget.reservedOutput)}
       </div>
-      <div class="stat-block">
-        <span class="stat-label">Reserved Output</span>
-        <span class="stat-value">${formatNumber(preview.budget.reservedOutput)}</span>
+      <div class="token-line">
+        <strong>Remaining:</strong> ${formatNumber(budget.remainingInput)}
       </div>
       ${warnings}
     `;
@@ -159,27 +159,34 @@
     els.selectedCount.textContent = `(${selected.length})`;
 
     if (!selected.length) {
-      els.selectedFiles.className = "list compact-list muted";
+      els.selectedFiles.className = "list muted";
       els.selectedFiles.textContent = "No selected files.";
       return;
     }
 
     const manuallySelected = new Set((state.selectedFiles || []).map((item) => item.path));
-    els.selectedFiles.className = "list compact-list";
+    els.selectedFiles.className = "list";
     els.selectedFiles.innerHTML = "";
 
     selected.forEach((file) => {
       const row = document.createElement("div");
-      row.className = "file-card";
+      row.className = "file-row";
+
+      const head = document.createElement("div");
+      head.className = "file-row-head";
+
+      const main = document.createElement("div");
+      main.className = "file-row-main";
+
+      const kind = document.createElement("span");
+      kind.className = "file-kind";
+      kind.textContent = inferFileKind(file.path);
 
       const title = document.createElement("div");
       title.className = "file-title";
       title.textContent = file.path;
 
-      const meta = document.createElement("div");
-      meta.className = "meta";
-      const reasons = file.reasons && file.reasons.length ? file.reasons.join(" · ") : file.reason || "Selected for context";
-      meta.textContent = `${file.includeMode} · ${reasons}`;
+      main.append(kind, title);
 
       const controls = document.createElement("div");
       controls.className = "selected-controls";
@@ -209,7 +216,14 @@
         controls.appendChild(smartBadge);
       }
 
-      row.append(title, meta, controls);
+      head.append(main, controls);
+
+      const meta = document.createElement("div");
+      meta.className = "file-row-meta meta";
+      const reasons = file.reasons && file.reasons.length ? file.reasons.join(" · ") : file.reason || "Selected for context";
+      meta.textContent = `${file.includeMode} · ${reasons}`;
+
+      row.append(head, meta);
       els.selectedFiles.appendChild(row);
     });
   }
@@ -217,24 +231,41 @@
   function renderSearchResults() {
     const results = state.searchResults || [];
     if (!results.length) {
-      els.suggestedFiles.className = "list compact-list muted";
+      els.suggestedFiles.className = "list muted";
       els.suggestedFiles.textContent = state.searchQuery ? "No matching files." : "No scan results yet.";
       return;
     }
 
-    els.suggestedFiles.className = "list compact-list";
+    els.suggestedFiles.className = "list";
     els.suggestedFiles.innerHTML = "";
     results.forEach((file) => {
-      const card = document.createElement("div");
-      card.className = "file-card";
+      const row = document.createElement("div");
+      row.className = "file-row";
+
+      const head = document.createElement("div");
+      head.className = "file-row-head";
+
+      const main = document.createElement("div");
+      main.className = "file-row-main";
+
+      const kind = document.createElement("span");
+      kind.className = "file-kind";
+      kind.textContent = shortLanguage(file.language || inferFileKind(file.path));
 
       const title = document.createElement("div");
       title.className = "file-title";
       title.textContent = file.path;
 
+      const token = document.createElement("span");
+      token.className = "file-token";
+      token.textContent = `${formatNumber(file.estimatedTokens)} tok`;
+
+      main.append(kind, title);
+      head.append(main, token);
+
       const meta = document.createElement("div");
-      meta.className = "meta";
-      meta.textContent = `${file.language} · ${formatNumber(file.estimatedTokens)} tokens${file.gitStatus ? ` · git ${file.gitStatus}` : ""}`;
+      meta.className = "file-row-meta meta";
+      meta.textContent = `${file.language}${file.gitStatus ? ` · git ${file.gitStatus}` : ""}`;
 
       const reasons = document.createElement("div");
       reasons.className = "meta";
@@ -250,8 +281,8 @@
         actions.appendChild(button);
       });
 
-      card.append(title, meta, reasons, actions);
-      els.suggestedFiles.appendChild(card);
+      row.append(head, meta, reasons, actions);
+      els.suggestedFiles.appendChild(row);
     });
   }
 
@@ -411,6 +442,18 @@
     }
     els.scanStatus.className = extraClass ? `muted ${extraClass}` : "muted";
     els.scanStatus.textContent = message;
+  }
+
+  function inferFileKind(filePath) {
+    const parts = String(filePath || "").split("/");
+    const name = parts[parts.length - 1] || "";
+    const ext = name.includes(".") ? name.split(".").pop() : "";
+    return shortLanguage(ext || name.slice(0, 3) || "file");
+  }
+
+  function shortLanguage(value) {
+    const text = String(value || "file").replace(/[^a-z0-9#+-]/gi, "").toLowerCase();
+    return (text || "file").slice(0, 4);
   }
 
   function formatNumber(value) {

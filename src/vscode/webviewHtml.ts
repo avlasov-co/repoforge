@@ -16,13 +16,18 @@ export function getWebviewHtml(webview: vscode.Webview, extensionUri: vscode.Uri
 <body>
   <main class="app-shell">
     <header class="shell-header">
-      <div class="eyebrow">REPOFORGE</div>
-      <h1>RepoForge</h1>
+      <div class="brand-mark" aria-hidden="true"></div>
+      <div class="brand-copy">
+        <div class="eyebrow">RepoForge</div>
+        <h1>RepoForge</h1>
+      </div>
     </header>
 
     <section class="panel">
-      <label class="field-label" for="task">Task</label>
-      <textarea id="task" placeholder="Describe the coding task"></textarea>
+      <div class="field-group">
+        <label class="field-label" for="task">Task</label>
+        <textarea id="task" placeholder="Describe the coding task"></textarea>
+      </div>
     </section>
 
     <section class="panel">
@@ -49,12 +54,12 @@ export function getWebviewHtml(webview: vscode.Webview, extensionUri: vscode.Uri
     </section>
 
     <section class="panel">
-      <div class="panel-row panel-row-start">
+      <div class="panel-header">
         <div class="panel-title">Context &amp; Tokens</div>
         <div class="meta-inline">Budget + estimate</div>
       </div>
-      <div id="tokenBudget" class="stats-grid stats-grid-empty muted">No preview yet.</div>
-      <div class="inline-inputs">
+      <div id="tokenBudget" class="token-summary muted">No preview yet.</div>
+      <div class="compact-grid">
         <div class="field-group">
           <label class="field-label" for="contextLimit">Context Limit</label>
           <select id="contextLimit">
@@ -81,7 +86,7 @@ export function getWebviewHtml(webview: vscode.Webview, extensionUri: vscode.Uri
     </section>
 
     <section class="panel">
-      <div class="panel-row">
+      <div class="panel-header">
         <div class="panel-title">Selected Files <span id="selectedCount">(0)</span></div>
         <button id="clearSelection" class="ghost compact">Clear</button>
       </div>
@@ -91,19 +96,21 @@ export function getWebviewHtml(webview: vscode.Webview, extensionUri: vscode.Uri
         <button id="addCurrentFile" class="ghost">Add Current</button>
         <button id="addOpenEditors" class="ghost">Add Editors</button>
       </div>
-      <div id="selectedFiles" class="list compact-list muted">No selected files.</div>
-      <div class="panel-row panel-row-start">
+      <div id="selectedFiles" class="list muted">No selected files.</div>
+      <div class="panel-header">
         <div class="subsection-title">Suggested Files</div>
         <div class="meta-inline">Search + scan</div>
       </div>
-      <div id="suggestedFiles" class="list compact-list muted">No scan results yet.</div>
+      <div id="suggestedFiles" class="list muted">No scan results yet.</div>
     </section>
 
     <section class="panel">
       <div class="primary-actions">
         <button id="previewContext" class="primary">Preview Context</button>
-        <button id="generateHandoff" class="primary">Generate Handoff</button>
-        <button id="openInAssistant" class="primary">Open in Codex</button>
+        <div class="primary-actions-split">
+          <button id="generateHandoff" class="primary">Generate Handoff</button>
+          <button id="openInAssistant" class="ghost">Open in Codex</button>
+        </div>
       </div>
       <div class="secondary-actions">
         <button id="copyPack" class="ghost">Copy Last Pack</button>
@@ -119,7 +126,7 @@ export function getWebviewHtml(webview: vscode.Webview, extensionUri: vscode.Uri
         <input id="patchPath" type="text" readonly placeholder=".repoforge/last-patch.diff">
         <button id="openLastPatch" class="ghost compact">Browse</button>
       </div>
-      <div class="utility-actions">
+      <div class="patch-actions">
         <button id="parsePatchFromClipboard" class="primary">Parse Patch</button>
         <button id="previewPatch" class="ghost">Preview Patch</button>
         <button id="applyLastPatch" class="ghost">Apply Patch</button>
@@ -128,7 +135,7 @@ export function getWebviewHtml(webview: vscode.Webview, extensionUri: vscode.Uri
         <div class="summary-title">Patch Summary</div>
         <div id="patchSummary" class="summary-content muted">No patch parsed yet.</div>
       </div>
-      <div class="utility-actions">
+      <div class="patch-actions">
         <button id="runValidation" class="ghost">Run Validation</button>
         <button id="openLastValidation" class="ghost">Open Result</button>
       </div>
@@ -139,8 +146,10 @@ export function getWebviewHtml(webview: vscode.Webview, extensionUri: vscode.Uri
     </section>
 
     <section class="panel panel-muted">
-      <div class="panel-title">Status</div>
-      <div id="scanStatus" class="muted">No scan run yet.</div>
+      <div class="panel-row">
+        <div class="panel-title">Status</div>
+        <div id="scanStatus" class="muted status-inline">No scan run yet.</div>
+      </div>
     </section>
   </main>
   <script nonce="${nonce}" src="${jsUri}"></script>
