@@ -14,96 +14,133 @@ export function getWebviewHtml(webview: vscode.Webview, extensionUri: vscode.Uri
   <title>RepoForge Context</title>
 </head>
 <body>
-  <main>
-    <h1>RepoForge Context</h1>
+  <main class="app-shell">
+    <header class="shell-header">
+      <div class="eyebrow">REPOFORGE</div>
+      <h1>RepoForge</h1>
+    </header>
 
-    <label for="task">Task</label>
-    <textarea id="task" placeholder="Describe the coding task"></textarea>
+    <section class="panel">
+      <label class="field-label" for="task">Task</label>
+      <textarea id="task" placeholder="Describe the coding task"></textarea>
+    </section>
 
-    <label>Mode</label>
-    <div class="segmented" id="mode">
-      <button data-value="codex">Codex</button>
-      <button data-value="local-qwen">Local Qwen/OpenCode</button>
-      <button data-value="continue">Continue</button>
-    </div>
+    <section class="panel">
+      <div class="field-group">
+        <label class="field-label" for="defaultIncludeMode">Include Mode</label>
+        <select id="defaultIncludeMode">
+          <option value="smart">Smart</option>
+          <option value="full">Full File</option>
+          <option value="codemap">Code Map</option>
+          <option value="snippet">Snippet</option>
+        </select>
+        <div id="includeModeHint" class="field-hint">Relevant files + dependencies</div>
+      </div>
 
-    <label>Context limit</label>
-    <div class="segmented" id="contextLimit">
-      <button data-value="32768">32k</button>
-      <button data-value="65536">64k</button>
-      <button data-value="131072">128k</button>
-      <button data-value="262144">262k</button>
-    </div>
-
-    <label>Tokenizer profile</label>
-    <div class="segmented" id="tokenizerProfile">
-      <button data-value="gpt-4-estimate">gpt-4</button>
-      <button data-value="qwen-estimate">qwen</button>
-      <button data-value="llama-estimate">llama</button>
-      <button data-value="chars-only">chars</button>
-    </div>
-
-    <label for="reservedOutput">Reserved output tokens</label>
-    <input id="reservedOutput" type="number" min="0" step="1000">
-
-    <section>
-      <h2>Actions</h2>
-      <div class="grid">
-        <button id="scanRepo">Scan Repo</button>
-        <button id="addCurrentFile">Add Current File</button>
-        <button id="addOpenEditors">Add Open Editors</button>
-        <button id="generatePack">Generate Pack</button>
-        <button id="copyPack">Copy Pack</button>
-        <button id="openLastPack">Open Last Pack</button>
-        <button id="clearSelection">Clear Selection</button>
-        <button id="saveTaskProfile">Save Task Profile</button>
+      <div class="field-group">
+        <label class="field-label" for="modeSelect">Handoff Mode</label>
+        <select id="modeSelect">
+          <option value="codex">Codex</option>
+          <option value="local-qwen">Local Qwen / OpenCode</option>
+          <option value="continue">Continue</option>
+        </select>
+        <div id="modeHint" class="field-hint">Optimized for OpenAI Codex</div>
       </div>
     </section>
 
-    <section>
-      <h2>Patch + Validation</h2>
-      <div class="grid">
-        <button id="parsePatchFromClipboard">Parse Patch From Clipboard</button>
-        <button id="previewPatch">Preview Patch</button>
-        <button id="applyLastPatch">Apply Last Patch</button>
-        <button id="runValidation">Run Validation</button>
-        <button id="openLastPatch">Open Last Patch</button>
-        <button id="openLastValidation">Open Last Validation</button>
+    <section class="panel">
+      <div class="panel-row panel-row-start">
+        <div class="panel-title">Context &amp; Tokens</div>
+        <div class="meta-inline">Budget + estimate</div>
       </div>
-      <div class="summary-block">
+      <div id="tokenBudget" class="stats-grid stats-grid-empty muted">No preview yet.</div>
+      <div class="inline-inputs">
+        <div class="field-group">
+          <label class="field-label" for="contextLimit">Context Limit</label>
+          <select id="contextLimit">
+            <option value="32768">32k</option>
+            <option value="65536">64k</option>
+            <option value="131072">128k</option>
+            <option value="262144">262k</option>
+          </select>
+        </div>
+        <div class="field-group">
+          <label class="field-label" for="tokenizerProfile">Tokenizer</label>
+          <select id="tokenizerProfile">
+            <option value="gpt-4-estimate">gpt-4</option>
+            <option value="qwen-estimate">qwen</option>
+            <option value="llama-estimate">llama</option>
+            <option value="chars-only">chars</option>
+          </select>
+        </div>
+      </div>
+      <div class="field-group">
+        <label class="field-label" for="reservedOutput">Reserved Output Tokens</label>
+        <input id="reservedOutput" type="number" min="0" step="1000">
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-row">
+        <div class="panel-title">Selected Files <span id="selectedCount">(0)</span></div>
+        <button id="clearSelection" class="ghost compact">Clear</button>
+      </div>
+      <input id="searchFiles" type="search" placeholder="Search path, language, symbol, import">
+      <div class="utility-actions">
+        <button id="scanRepo" class="ghost">Scan Repo</button>
+        <button id="addCurrentFile" class="ghost">Add Current</button>
+        <button id="addOpenEditors" class="ghost">Add Editors</button>
+      </div>
+      <div id="selectedFiles" class="list compact-list muted">No selected files.</div>
+      <div class="panel-row panel-row-start">
+        <div class="subsection-title">Suggested Files</div>
+        <div class="meta-inline">Search + scan</div>
+      </div>
+      <div id="suggestedFiles" class="list compact-list muted">No scan results yet.</div>
+    </section>
+
+    <section class="panel">
+      <div class="primary-actions">
+        <button id="previewContext" class="primary">Preview Context</button>
+        <button id="generateHandoff" class="primary">Generate Handoff</button>
+        <button id="openInAssistant" class="primary">Open in Codex</button>
+      </div>
+      <div class="secondary-actions">
+        <button id="copyPack" class="ghost">Copy Last Pack</button>
+        <button id="openLastPack" class="ghost">Open Last Pack</button>
+        <button id="saveTaskProfile" class="ghost">Save Task Profile</button>
+      </div>
+      <div id="profiles" class="profiles-list muted">No profiles saved.</div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-title">Patch + Validation</div>
+      <div class="path-row">
+        <input id="patchPath" type="text" readonly placeholder=".repoforge/last-patch.diff">
+        <button id="openLastPatch" class="ghost compact">Browse</button>
+      </div>
+      <div class="utility-actions">
+        <button id="parsePatchFromClipboard" class="primary">Parse Patch</button>
+        <button id="previewPatch" class="ghost">Preview Patch</button>
+        <button id="applyLastPatch" class="ghost">Apply Patch</button>
+      </div>
+      <div class="summary-card">
         <div class="summary-title">Patch Summary</div>
-        <div id="patchSummary" class="muted">No patch parsed yet.</div>
+        <div id="patchSummary" class="summary-content muted">No patch parsed yet.</div>
       </div>
-      <div class="summary-block">
-        <div class="summary-title">Validation Summary</div>
-        <div id="validationSummary" class="muted">No validation run yet.</div>
+      <div class="utility-actions">
+        <button id="runValidation" class="ghost">Run Validation</button>
+        <button id="openLastValidation" class="ghost">Open Result</button>
+      </div>
+      <div class="summary-card">
+        <div class="summary-title">Validation Results</div>
+        <div id="validationSummary" class="summary-content muted">No validation run yet.</div>
       </div>
     </section>
 
-    <section>
-      <h2>Search files</h2>
-      <input id="searchFiles" type="search" placeholder="path, language, symbol, import">
-      <div id="suggestedFiles" class="list muted">No scan results yet.</div>
-    </section>
-
-    <section>
-      <h2>Selected files</h2>
-      <div id="selectedFiles" class="list muted">No selected files.</div>
-    </section>
-
-    <section>
-      <h2>Token budget</h2>
-      <div id="tokenBudget" class="budget muted">No preview yet.</div>
-    </section>
-
-    <section>
-      <h2>Scan status</h2>
+    <section class="panel panel-muted">
+      <div class="panel-title">Status</div>
       <div id="scanStatus" class="muted">No scan run yet.</div>
-    </section>
-
-    <section>
-      <h2>Task profiles</h2>
-      <div id="profiles" class="list muted">No profiles saved.</div>
     </section>
   </main>
   <script nonce="${nonce}" src="${jsUri}"></script>

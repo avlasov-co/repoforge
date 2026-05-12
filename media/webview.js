@@ -1,202 +1,441 @@
 (function () {
   const vscode = acquireVsCodeApi();
-  let state = undefined;
+  let state;
 
   const els = {
-    task: document.getElementById("task"),
-    mode: document.getElementById("mode"),
-    contextLimit: document.getElementById("contextLimit"),
-    tokenizerProfile: document.getElementById("tokenizerProfile"),
-    reservedOutput: document.getElementById("reservedOutput"),
-    searchFiles: document.getElementById("searchFiles"),
-    suggestedFiles: document.getElementById("suggestedFiles"),
-    selectedFiles: document.getElementById("selectedFiles"),
-    tokenBudget: document.getElementById("tokenBudget"),
-    scanStatus: document.getElementById("scanStatus"),
-    profiles: document.getElementById("profiles"),
-    patchSummary: document.getElementById("patchSummary"),
-    validationSummary: document.getElementById("validationSummary")
+    task: byId("task"),
+    defaultIncludeMode: byId("defaultIncludeMode"),
+    includeModeHint: byId("includeModeHint"),
+    modeSelect: byId("modeSelect"),
+    modeHint: byId("modeHint"),
+    contextLimit: byId("contextLimit"),
+    tokenizerProfile: byId("tokenizerProfile"),
+    reservedOutput: byId("reservedOutput"),
+    searchFiles: byId("searchFiles"),
+    suggestedFiles: byId("suggestedFiles"),
+    selectedFiles: byId("selectedFiles"),
+    selectedCount: byId("selectedCount"),
+    tokenBudget: byId("tokenBudget"),
+    scanStatus: byId("scanStatus"),
+    profiles: byId("profiles"),
+    patchPath: byId("patchPath"),
+    patchSummary: byId("patchSummary"),
+    validationSummary: byId("validationSummary"),
+    openInAssistant: byId("openInAssistant")
   };
 
-  function post(message) {
-    vscode.postMessage(message);
-  }
+  init();
 
-  function bindSegment(id, type, key, coerce) {
-    document.querySelectorAll("#" + id + " button").forEach((button) => {
-      button.addEventListener("click", () => post({ type, [key]: coerce(button.dataset.value) }));
+  function init() {
+    bindInput("task", "input", debounce(() => post({ type: "setTask", task: els.task.value }), 200));
+    bindInput("defaultIncludeMode", "change", () => post({ type: "setDefaultIncludeMode", includeMode: els.defaultIncludeMode.value }));
+    bindInput("modeSelect", "change", () => post({ type: "setMode", mode: els.modeSelect.value }));
+    bindInput("contextLimit", "change", () => post({ type: "setContextLimit", limit: Number(els.contextLimit.value) }));
+    bindInput("tokenizerProfile", "change", () => post({ type: "setTokenizerProfile", profile: els.tokenizerProfile.value }));
+    bindInput("reservedOutput", "input", debounce(() => post({ type: "setReservedOutput", tokens: Number(els.reservedOutput.value || 0) }), 200));
+    bindInput("searchFiles", "input", debounce(() => post({ type: "searchFiles", query: els.searchFiles.value }), 120));
+
+    bindClick("scanRepo", () => post({ type: "scanRepo" }), true);
+    bindClick("addCurrentFile", () => post({ type: "addFile", path: "__current__", includeMode: mapIncludeMode(els.defaultIncludeMode.value) }), true);
+    bindClick("addOpenEditors", () => post({ type: "addFile", path: "__open__", includeMode: mapIncludeMode(els.defaultIncludeMode.value) }), true);
+    bindClick("clearSelection", () => post({ type: "clearSelection" }), true);
+    bindClick("previewContext", () => post({ type: "previewContext" }), true);
+    bindClick("generateHandoff", () => post({ type: "generateHandoff" }), true);
+    bindClick("openInAssistant", () => post({ type: "openInAssistant" }), true);
+    bindClick("copyPack", () => post({ type: "copyPack" }), true);
+    bindClick("openLastPack", () => post({ type: "openLastPack" }), true);
+    bindClick("saveTaskProfile", () => {
+      flushFormState();
+      const name = prompt("Profile name");
+      if (name) {
+        post({ type: "saveTaskProfile", name });
+      }
+    }, true);
+    bindClick("parsePatchFromClipboard", () => post({ type: "parsePatchFromClipboard" }), true);
+    bindClick("previewPatch", () => post({ type: "previewPatch" }), true);
+    bindClick("applyLastPatch", () => post({ type: "applyLastPatch" }), true);
+    bindClick("runValidation", () => post({ type: "runValidation" }), true);
+    bindClick("openLastPatch", () => post({ type: "openLastPatch" }), true);
+    bindClick("openLastValidation", () => post({ type: "openLastValidation" }), true);
+
+    window.addEventListener("message", (event) => {
+      const message = event.data;
+      if (message.type === "state") {
+        state = message.state;
+        render();
+        return;
+      }
+      if (message.type === "scanProgress" || message.type === "info" || message.type === "error") {
+        setStatus(message.message, message.type === "error" ? "warning" : "");
+      }
+    });
+
+    window.addEventListener("error", (event) => {
+      setStatus(`Sidebar error: ${event.message}`, "warning");
     });
   }
 
-  bindSegment("mode", "setMode", "mode", String);
-  bindSegment("contextLimit", "setContextLimit", "limit", Number);
-  bindSegment("tokenizerProfile", "setTokenizerProfile", "profile", String);
-
-  els.task.addEventListener("input", debounce(() => post({ type: "setTask", task: els.task.value }), 250));
-  els.reservedOutput.addEventListener("input", debounce(() => post({ type: "setReservedOutput", tokens: Number(els.reservedOutput.value || 0) }), 250));
-  els.searchFiles.addEventListener("input", debounce(() => post({ type: "searchFiles", query: els.searchFiles.value }), 200));
-
-  document.getElementById("scanRepo").addEventListener("click", () => post({ type: "scanRepo" }));
-  document.getElementById("addCurrentFile").addEventListener("click", () => post({ type: "addFile", path: "__current__", includeMode: "full" }));
-  document.getElementById("addOpenEditors").addEventListener("click", () => post({ type: "addFile", path: "__open__", includeMode: "full" }));
-  document.getElementById("generatePack").addEventListener("click", () => post({ type: "generatePack" }));
-  document.getElementById("copyPack").addEventListener("click", () => post({ type: "copyPack" }));
-  document.getElementById("openLastPack").addEventListener("click", () => post({ type: "openLastPack" }));
-  document.getElementById("clearSelection").addEventListener("click", () => post({ type: "clearSelection" }));
-  document.getElementById("parsePatchFromClipboard").addEventListener("click", () => post({ type: "parsePatchFromClipboard" }));
-  document.getElementById("previewPatch").addEventListener("click", () => post({ type: "previewPatch" }));
-  document.getElementById("applyLastPatch").addEventListener("click", () => post({ type: "applyLastPatch" }));
-  document.getElementById("runValidation").addEventListener("click", () => post({ type: "runValidation" }));
-  document.getElementById("openLastPatch").addEventListener("click", () => post({ type: "openLastPatch" }));
-  document.getElementById("openLastValidation").addEventListener("click", () => post({ type: "openLastValidation" }));
-  document.getElementById("saveTaskProfile").addEventListener("click", () => {
-    const name = prompt("Profile name");
-    if (name) post({ type: "saveTaskProfile", name });
-  });
-
-  window.addEventListener("message", (event) => {
-    const message = event.data;
-    if (message.type === "state") {
-      state = message.state;
-      render();
-    } else if (message.type === "scanProgress") {
-      els.scanStatus.textContent = message.message;
-    } else if (message.type === "error" || message.type === "info") {
-      els.scanStatus.textContent = message.message;
-    }
-  });
-
   function render() {
-    if (!state) return;
-    if (document.activeElement !== els.task) els.task.value = state.task || "";
-    if (document.activeElement !== els.reservedOutput) els.reservedOutput.value = String(state.reservedOutput || 0);
-    setActive("mode", state.mode);
-    setActive("contextLimit", String(state.contextLimit));
-    setActive("tokenizerProfile", state.tokenizerProfile);
-    renderSearch();
-    renderSelected();
-    renderBudget();
+    if (!state) {
+      return;
+    }
+
+    syncValue(els.task, state.task || "");
+    syncValue(els.defaultIncludeMode, state.defaultIncludeMode);
+    syncValue(els.modeSelect, state.mode);
+    syncValue(els.contextLimit, String(state.contextLimit));
+    syncValue(els.tokenizerProfile, state.tokenizerProfile);
+    syncValue(els.reservedOutput, String(state.reservedOutput || 0));
+    els.patchPath.value = state.lastPatchPath || "";
+
+    renderModeHint();
+    renderIncludeModeHint();
+    renderTokenBudget();
+    renderSelectedFiles();
+    renderSearchResults();
     renderProfiles();
     renderPatchSummary();
     renderValidationSummary();
-    if (state.scanSummary) els.scanStatus.textContent = state.scanSummary;
-  }
+    updateAssistantButtonLabel();
 
-  function setActive(id, value) {
-    document.querySelectorAll("#" + id + " button").forEach((button) => {
-      button.classList.toggle("active", button.dataset.value === String(value));
-    });
-  }
-
-  function renderSearch() {
-    const results = state.searchResults || [];
-    if (!results.length) {
-      els.suggestedFiles.className = "list muted";
-      els.suggestedFiles.textContent = "No matching files.";
-      return;
-    }
-    els.suggestedFiles.className = "list";
-    els.suggestedFiles.innerHTML = "";
-    for (const file of results) {
-      const div = document.createElement("div");
-      div.className = "file";
-      div.innerHTML = '<div class="file-title"></div><div class="meta"></div><div class="reasons"></div><div class="file-actions"></div>';
-      div.querySelector(".file-title").textContent = file.path;
-      div.querySelector(".meta").textContent = `${file.language} · ${file.estimatedTokens} tokens${file.gitStatus ? " · git " + file.gitStatus : ""}`;
-      div.querySelector(".reasons").textContent = file.reasons && file.reasons.length ? file.reasons.join("; ") : "No relevance reasons yet.";
-      const actions = div.querySelector(".file-actions");
-      for (const mode of ["full", "codemap", "snippet"]) {
-        const button = document.createElement("button");
-        button.textContent = mode;
-        button.addEventListener("click", () => post({ type: "addFile", path: file.path, includeMode: mode }));
-        actions.appendChild(button);
-      }
-      els.suggestedFiles.appendChild(div);
+    if (state.scanSummary) {
+      setStatus(state.scanSummary);
     }
   }
 
-  function renderSelected() {
-    const selected = state.selectedFiles || [];
-    if (!selected.length) {
-      els.selectedFiles.className = "list muted";
-      els.selectedFiles.textContent = "No selected files.";
-      return;
-    }
-    els.selectedFiles.className = "list";
-    els.selectedFiles.innerHTML = "";
-    for (const file of selected) {
-      const row = document.createElement("div");
-      row.className = "selected-row";
-      const title = document.createElement("div");
-      title.className = "file-title";
-      title.textContent = file.path;
-      const select = document.createElement("select");
-      for (const mode of ["full", "snippet", "codemap", "none"]) {
-        const option = document.createElement("option");
-        option.value = mode;
-        option.textContent = mode;
-        option.selected = file.includeMode === mode;
-        select.appendChild(option);
-      }
-      select.addEventListener("change", () => post({ type: "setIncludeMode", path: file.path, includeMode: select.value }));
-      const remove = document.createElement("button");
-      remove.textContent = "×";
-      remove.addEventListener("click", () => post({ type: "removeFile", path: file.path }));
-      row.append(title, select, remove);
-      els.selectedFiles.appendChild(row);
-    }
+  function renderModeHint() {
+    const hints = {
+      codex: "Optimized for OpenAI Codex",
+      "local-qwen": "Longer handoff for local reasoning models",
+      continue: "Shorter handoff for Continue"
+    };
+    els.modeHint.textContent = hints[state.mode] || "";
   }
 
-  function renderBudget() {
+  function renderIncludeModeHint() {
+    const hints = {
+      smart: "Relevant files + dependencies",
+      full: "Adds full file contents by default",
+      codemap: "Prefers compact symbol maps",
+      snippet: "Keeps file selections trimmed"
+    };
+    els.includeModeHint.textContent = hints[state.defaultIncludeMode] || "";
+  }
+
+  function renderTokenBudget() {
     const preview = state.preview;
     if (!preview) {
-      els.tokenBudget.className = "budget muted";
+      els.tokenBudget.className = "stats-grid stats-grid-empty muted";
       els.tokenBudget.textContent = "No preview yet.";
       return;
     }
-    const warnings = preview.warnings && preview.warnings.length ? `<div class="warnings">${escapeHtml(preview.warnings.join(" "))}</div>` : "";
-    els.tokenBudget.className = "budget";
-    els.tokenBudget.innerHTML = `Used input: ${preview.budget.usedInput}<br>Reserved output: ${preview.budget.reservedOutput}<br>Limit: ${preview.budget.limit}<br>Remaining: ${preview.budget.remainingInput}${warnings}`;
+
+    const visibleSelections = getVisibleSelections();
+    const warnings = preview.warnings.length ? `<div class="warning-line">${preview.warnings.map(escapeHtml).join("<br>")}</div>` : "";
+    els.tokenBudget.className = "stats-grid";
+    els.tokenBudget.innerHTML = `
+      <div class="stat-block">
+        <span class="stat-label">Budget</span>
+        <span class="stat-value">${formatNumber(preview.budget.usedInput)} / ${formatNumber(preview.budget.limit)} tokens</span>
+      </div>
+      <div class="stat-block">
+        <span class="stat-label">Remaining</span>
+        <span class="stat-value">${formatNumber(preview.budget.remainingInput)}</span>
+      </div>
+      <div class="stat-block">
+        <span class="stat-label">Est. Files</span>
+        <span class="stat-value">${visibleSelections.length}</span>
+      </div>
+      <div class="stat-block">
+        <span class="stat-label">Reserved Output</span>
+        <span class="stat-value">${formatNumber(preview.budget.reservedOutput)}</span>
+      </div>
+      ${warnings}
+    `;
+  }
+
+  function renderSelectedFiles() {
+    const selected = getVisibleSelections();
+    els.selectedCount.textContent = `(${selected.length})`;
+
+    if (!selected.length) {
+      els.selectedFiles.className = "list compact-list muted";
+      els.selectedFiles.textContent = "No selected files.";
+      return;
+    }
+
+    const manuallySelected = new Set((state.selectedFiles || []).map((item) => item.path));
+    els.selectedFiles.className = "list compact-list";
+    els.selectedFiles.innerHTML = "";
+
+    selected.forEach((file) => {
+      const row = document.createElement("div");
+      row.className = "file-card";
+
+      const title = document.createElement("div");
+      title.className = "file-title";
+      title.textContent = file.path;
+
+      const meta = document.createElement("div");
+      meta.className = "meta";
+      const reasons = file.reasons && file.reasons.length ? file.reasons.join(" · ") : file.reason || "Selected for context";
+      meta.textContent = `${file.includeMode} · ${reasons}`;
+
+      const controls = document.createElement("div");
+      controls.className = "selected-controls";
+
+      if (manuallySelected.has(file.path)) {
+        const select = document.createElement("select");
+        ["full", "snippet", "codemap"].forEach((mode) => {
+          const option = document.createElement("option");
+          option.value = mode;
+          option.textContent = mode;
+          option.selected = file.includeMode === mode;
+          select.appendChild(option);
+        });
+        select.addEventListener("change", () => post({ type: "setIncludeMode", path: file.path, includeMode: select.value }));
+        controls.appendChild(select);
+
+        const remove = document.createElement("button");
+        remove.className = "ghost compact";
+        remove.textContent = "Remove";
+        remove.addEventListener("click", () => post({ type: "removeFile", path: file.path }));
+        controls.appendChild(remove);
+      } else {
+        const smartBadge = document.createElement("button");
+        smartBadge.className = "ghost compact";
+        smartBadge.textContent = "Pin";
+        smartBadge.addEventListener("click", () => post({ type: "addFile", path: file.path, includeMode: file.includeMode || "codemap" }));
+        controls.appendChild(smartBadge);
+      }
+
+      row.append(title, meta, controls);
+      els.selectedFiles.appendChild(row);
+    });
+  }
+
+  function renderSearchResults() {
+    const results = state.searchResults || [];
+    if (!results.length) {
+      els.suggestedFiles.className = "list compact-list muted";
+      els.suggestedFiles.textContent = state.searchQuery ? "No matching files." : "No scan results yet.";
+      return;
+    }
+
+    els.suggestedFiles.className = "list compact-list";
+    els.suggestedFiles.innerHTML = "";
+    results.forEach((file) => {
+      const card = document.createElement("div");
+      card.className = "file-card";
+
+      const title = document.createElement("div");
+      title.className = "file-title";
+      title.textContent = file.path;
+
+      const meta = document.createElement("div");
+      meta.className = "meta";
+      meta.textContent = `${file.language} · ${formatNumber(file.estimatedTokens)} tokens${file.gitStatus ? ` · git ${file.gitStatus}` : ""}`;
+
+      const reasons = document.createElement("div");
+      reasons.className = "meta";
+      reasons.textContent = file.reasons.length ? file.reasons.join(" · ") : "No relevance reasons yet.";
+
+      const actions = document.createElement("div");
+      actions.className = "file-actions";
+      ["full", "codemap", "snippet"].forEach((mode) => {
+        const button = document.createElement("button");
+        button.className = "ghost compact";
+        button.textContent = mode;
+        button.addEventListener("click", () => post({ type: "addFile", path: file.path, includeMode: mode }));
+        actions.appendChild(button);
+      });
+
+      card.append(title, meta, reasons, actions);
+      els.suggestedFiles.appendChild(card);
+    });
   }
 
   function renderProfiles() {
     const profiles = state.profiles || [];
     if (!profiles.length) {
-      els.profiles.className = "list muted";
+      els.profiles.className = "profiles-list muted";
       els.profiles.textContent = "No profiles saved.";
       return;
     }
-    els.profiles.className = "list";
+
+    els.profiles.className = "profiles-list";
     els.profiles.innerHTML = "";
-    for (const profile of profiles) {
-      const div = document.createElement("div");
-      div.className = "file";
-      div.textContent = `${profile.name}: ${profile.mode}, ${profile.contextLimit}`;
-      els.profiles.appendChild(div);
-    }
+    profiles.slice(0, 3).forEach((profile) => {
+      const item = document.createElement("div");
+      item.className = "meta";
+      item.textContent = `${profile.name}: ${profile.mode}, ${formatNumber(profile.contextLimit)} tokens`;
+      els.profiles.appendChild(item);
+    });
   }
 
   function renderPatchSummary() {
     const preview = state.patchPreview;
     if (!preview) {
+      els.patchSummary.className = "summary-content muted";
       els.patchSummary.textContent = "No patch parsed yet.";
-      els.patchSummary.className = "muted";
       return;
     }
-    const diagnostics = preview.diagnostics && preview.diagnostics.length ? ` · diagnostics ${preview.diagnostics.length}` : "";
-    els.patchSummary.className = "budget";
-    els.patchSummary.textContent = `${preview.files.length} files · +${preview.totalAdditions} / -${preview.totalDeletions}${diagnostics}`;
+
+    const rows = [
+      ["Files changed", String(preview.files.length)],
+      ["Additions", formatNumber(preview.totalAdditions)],
+      ["Deletions", formatNumber(preview.totalDeletions)]
+    ];
+
+    if (preview.diagnostics.length) {
+      rows.push(["Diagnostics", String(preview.diagnostics.length)]);
+    }
+
+    els.patchSummary.className = "summary-content";
+    els.patchSummary.innerHTML = renderSummaryList(rows);
   }
 
   function renderValidationSummary() {
     const result = state.validationResult;
     if (!result) {
+      els.validationSummary.className = "summary-content muted";
       els.validationSummary.textContent = "No validation run yet.";
-      els.validationSummary.className = "muted";
       return;
     }
-    els.validationSummary.className = "budget";
-    els.validationSummary.textContent = `${result.command} · ${result.passed ? "passed" : "failed"} · ${result.durationMs}ms · exit ${result.exitCode === null ? "null" : result.exitCode}`;
+
+    const stateClass = result.passed ? "status-pass" : "status-fail";
+    els.validationSummary.className = `summary-content ${stateClass}`;
+    els.validationSummary.innerHTML = `
+      <div class="summary-list">
+        <div class="summary-row">
+          <span class="summary-key">Result</span>
+          <span class="summary-value">${result.passed ? "PASSED" : "FAILED"}</span>
+        </div>
+        <div class="summary-row">
+          <span class="summary-key">Command</span>
+          <span class="summary-value">${escapeHtml(result.command)}</span>
+        </div>
+        <div class="summary-row">
+          <span class="summary-key">Duration</span>
+          <span class="summary-value">${formatNumber(result.durationMs)}ms</span>
+        </div>
+      </div>
+    `;
+  }
+
+  function updateAssistantButtonLabel() {
+    const labels = {
+      codex: "Open in Codex",
+      "local-qwen": "Open in OpenCode",
+      continue: "Open in Continue"
+    };
+    els.openInAssistant.textContent = labels[state.mode] || "Open Handoff";
+  }
+
+  function getVisibleSelections() {
+    const selected = Array.isArray(state.selectedFiles) ? [...state.selectedFiles] : [];
+    if (state.defaultIncludeMode !== "smart" || !state.preview || !Array.isArray(state.preview.likelySelections)) {
+      return selected;
+    }
+
+    const byPath = new Map(selected.map((item) => [item.path, item]));
+    state.preview.likelySelections.forEach((item) => {
+      if (!byPath.has(item.path)) {
+        byPath.set(item.path, item);
+      }
+    });
+    return Array.from(byPath.values());
+  }
+
+  function mapIncludeMode(value) {
+    return value === "smart" ? "full" : value;
+  }
+
+  function syncValue(element, value) {
+    if (!element) {
+      return;
+    }
+    if (document.activeElement !== element) {
+      element.value = value;
+    }
+  }
+
+  function bindClick(id, handler, shouldFlush) {
+    const element = byId(id);
+    if (!element) {
+      return;
+    }
+    element.addEventListener("click", (event) => {
+      event.preventDefault();
+      try {
+        if (shouldFlush) {
+          flushFormState();
+        }
+        handler(event);
+      } catch (error) {
+        setStatus(`Sidebar action failed: ${error instanceof Error ? error.message : String(error)}`, "warning");
+      }
+    });
+  }
+
+  function bindInput(id, eventName, handler) {
+    const element = byId(id);
+    if (!element) {
+      return;
+    }
+    element.addEventListener(eventName, () => {
+      try {
+        handler();
+      } catch (error) {
+        setStatus(`Sidebar input failed: ${error instanceof Error ? error.message : String(error)}`, "warning");
+      }
+    });
+  }
+
+  function post(message) {
+    vscode.postMessage(message);
+  }
+
+  function flushFormState() {
+    post({ type: "setTask", task: els.task.value });
+    post({ type: "setDefaultIncludeMode", includeMode: els.defaultIncludeMode.value });
+    post({ type: "setMode", mode: els.modeSelect.value });
+    post({ type: "setContextLimit", limit: Number(els.contextLimit.value) });
+    post({ type: "setTokenizerProfile", profile: els.tokenizerProfile.value });
+    post({ type: "setReservedOutput", tokens: Number(els.reservedOutput.value || 0) });
+  }
+
+  function setStatus(message, extraClass) {
+    if (!els.scanStatus) {
+      return;
+    }
+    els.scanStatus.className = extraClass ? `muted ${extraClass}` : "muted";
+    els.scanStatus.textContent = message;
+  }
+
+  function formatNumber(value) {
+    return Number(value || 0).toLocaleString();
+  }
+
+  function renderSummaryList(rows) {
+    return `
+      <div class="summary-list">
+        ${rows
+          .map(
+            ([key, value]) => `
+              <div class="summary-row">
+                <span class="summary-key">${escapeHtml(key)}</span>
+                <span class="summary-value">${escapeHtml(value)}</span>
+              </div>
+            `
+          )
+          .join("")}
+      </div>
+    `;
+  }
+
+  function byId(id) {
+    return document.getElementById(id);
   }
 
   function debounce(fn, delay) {
