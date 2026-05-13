@@ -17,10 +17,7 @@ export function getWebviewHtml(webview: vscode.Webview, extensionUri: vscode.Uri
   <main class="app-shell">
     <header class="shell-header">
       <div class="brand-mark" aria-hidden="true"></div>
-      <div class="brand-copy">
-        <div class="eyebrow">RepoForge</div>
-        <h1>RepoForge</h1>
-      </div>
+      <h1>RepoForge</h1>
     </header>
 
     <section class="panel">
@@ -97,11 +94,14 @@ export function getWebviewHtml(webview: vscode.Webview, extensionUri: vscode.Uri
         <button id="addOpenEditors" class="ghost">Add Editors</button>
       </div>
       <div id="selectedFiles" class="list muted">No selected files.</div>
-      <div class="panel-header">
-        <div class="subsection-title">Suggested Files</div>
-        <div class="meta-inline">Search + scan</div>
+      <div class="suggested-group">
+        <button id="toggleSuggestedFiles" class="disclosure-toggle" type="button" aria-expanded="false">
+          <span id="suggestedChevron" class="disclosure-chevron" aria-hidden="true">▸</span>
+          <span class="subsection-title">Suggestions</span>
+          <span id="suggestedSummary" class="meta-inline">No scan results</span>
+        </button>
+        <div id="suggestedFiles" class="list muted" hidden>No scan results yet.</div>
       </div>
-      <div id="suggestedFiles" class="list muted">No scan results yet.</div>
     </section>
 
     <section class="panel">

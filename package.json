@@ -2,7 +2,7 @@
   "name": "repoforge",
   "displayName": "RepoForge",
   "description": "Local-first repository context packs for coding agents.",
-  "version": "0.4.7",
+  "version": "0.4.8",
   "publisher": "avlasov-co",
   "icon": "resources/repoforge.png",
   "license": "MIT",

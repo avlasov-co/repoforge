@@ -1,6 +1,10 @@
 (function () {
   const vscode = acquireVsCodeApi();
   let state;
+  const uiState = {
+    suggestedExpanded: false,
+    activeSuggestedMenu: ""
+  };
 
   const els = {
     task: byId("task"),
@@ -13,6 +17,9 @@
     reservedOutput: byId("reservedOutput"),
     searchFiles: byId("searchFiles"),
     suggestedFiles: byId("suggestedFiles"),
+    suggestedSummary: byId("suggestedSummary"),
+    suggestedChevron: byId("suggestedChevron"),
+    toggleSuggestedFiles: byId("toggleSuggestedFiles"),
     selectedFiles: byId("selectedFiles"),
     selectedCount: byId("selectedCount"),
     tokenBudget: byId("tokenBudget"),
@@ -34,6 +41,10 @@
     bindInput("tokenizerProfile", "change", () => post({ type: "setTokenizerProfile", profile: els.tokenizerProfile.value }));
     bindInput("reservedOutput", "input", debounce(() => post({ type: "setReservedOutput", tokens: Number(els.reservedOutput.value || 0) }), 200));
     bindInput("searchFiles", "input", debounce(() => post({ type: "searchFiles", query: els.searchFiles.value }), 120));
+    bindClick("toggleSuggestedFiles", () => {
+      uiState.suggestedExpanded = !uiState.suggestedExpanded;
+      renderSuggestedVisibility();
+    });
 
     bindClick("scanRepo", () => post({ type: "scanRepo" }), true);
     bindClick("addCurrentFile", () => post({ type: "addFile", path: "__current__", includeMode: mapIncludeMode(els.defaultIncludeMode.value) }), true);
@@ -230,9 +241,13 @@
 
   function renderSearchResults() {
     const results = state.searchResults || [];
+    const hasQuery = Boolean((els.searchFiles?.value || "").trim());
+    updateSuggestedDisclosure(results, hasQuery);
+
     if (!results.length) {
       els.suggestedFiles.className = "list muted";
-      els.suggestedFiles.textContent = state.searchQuery ? "No matching files." : "No scan results yet.";
+      els.suggestedFiles.textContent = hasQuery ? "No matching files." : "No scan results yet.";
+      renderSuggestedVisibility();
       return;
     }
 
@@ -240,7 +255,19 @@
     els.suggestedFiles.innerHTML = "";
     results.forEach((file) => {
       const row = document.createElement("div");
-      row.className = "file-row";
+      row.className = "file-row file-row-button";
+      row.tabIndex = 0;
+      row.setAttribute("role", "button");
+      row.setAttribute("title", file.reasons.length ? file.reasons.join(" · ") : "Add suggested file");
+      row.addEventListener("click", () => {
+        post({ type: "addFile", path: file.path, includeMode: mapIncludeMode(els.defaultIncludeMode.value) });
+      });
+      row.addEventListener("keydown", (event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          post({ type: "addFile", path: file.path, includeMode: mapIncludeMode(els.defaultIncludeMode.value) });
+        }
+      });
 
       const head = document.createElement("div");
       head.className = "file-row-head";
@@ -265,25 +292,45 @@
 
       const meta = document.createElement("div");
       meta.className = "file-row-meta meta";
-      meta.textContent = `${file.language}${file.gitStatus ? ` · git ${file.gitStatus}` : ""}`;
-
-      const reasons = document.createElement("div");
-      reasons.className = "meta";
-      reasons.textContent = file.reasons.length ? file.reasons.join(" · ") : "No relevance reasons yet.";
+      meta.textContent = formatSuggestedMeta(file);
 
       const actions = document.createElement("div");
-      actions.className = "file-actions";
-      ["full", "codemap", "snippet"].forEach((mode) => {
-        const button = document.createElement("button");
-        button.className = "ghost compact";
-        button.textContent = mode;
-        button.addEventListener("click", () => post({ type: "addFile", path: file.path, includeMode: mode }));
-        actions.appendChild(button);
+      actions.className = "row-menu";
+
+      const menuButton = document.createElement("button");
+      menuButton.className = "ghost compact menu-trigger";
+      menuButton.type = "button";
+      menuButton.textContent = "⋯";
+      menuButton.setAttribute("aria-label", `Choose include mode for ${file.path}`);
+      menuButton.addEventListener("click", (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        uiState.activeSuggestedMenu = uiState.activeSuggestedMenu === file.path ? "" : file.path;
+        renderSearchResults();
       });
 
-      row.append(head, meta, reasons, actions);
+      const menu = document.createElement("div");
+      menu.className = `mode-menu${uiState.activeSuggestedMenu === file.path ? " is-open" : ""}`;
+      ["full", "codemap", "snippet"].forEach((mode) => {
+        const button = document.createElement("button");
+        button.className = "ghost compact mode-menu-item";
+        button.type = "button";
+        button.textContent = mode;
+        button.addEventListener("click", (event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          uiState.activeSuggestedMenu = "";
+          post({ type: "addFile", path: file.path, includeMode: mode });
+        });
+        menu.appendChild(button);
+      });
+
+      actions.append(menuButton, menu);
+      head.append(actions);
+      row.append(head, meta);
       els.suggestedFiles.appendChild(row);
     });
+    renderSuggestedVisibility();
   }
 
   function renderProfiles() {
@@ -458,6 +505,53 @@
 
   function formatNumber(value) {
     return Number(value || 0).toLocaleString();
+  }
+
+  function formatSuggestedMeta(file) {
+    const parts = [];
+    if (file.language) {
+      parts.push(file.language);
+    }
+    if (file.gitStatus) {
+      parts.push(`git ${file.gitStatus}`);
+    }
+    if (file.reasons.length) {
+      parts.push(file.reasons[0]);
+    }
+    return parts.join(" · ") || "Suggested";
+  }
+
+  function updateSuggestedDisclosure(results, hasQuery) {
+    if (!els.toggleSuggestedFiles || !els.suggestedSummary) {
+      return;
+    }
+
+    const count = results.length;
+    if (!count) {
+      uiState.activeSuggestedMenu = "";
+      els.suggestedSummary.textContent = hasQuery ? "No matches" : "No scan results";
+      els.toggleSuggestedFiles.disabled = true;
+      els.toggleSuggestedFiles.setAttribute("aria-expanded", "false");
+      return;
+    }
+
+    if (uiState.suggestedExpanded === undefined || uiState.suggestedExpanded === null) {
+      uiState.suggestedExpanded = false;
+    }
+    els.toggleSuggestedFiles.disabled = false;
+    els.suggestedSummary.textContent = `${count} ${count === 1 ? "file" : "files"}${hasQuery ? " · Search" : " · Scan"}`;
+  }
+
+  function renderSuggestedVisibility() {
+    if (!els.suggestedFiles || !els.toggleSuggestedFiles || !els.suggestedChevron) {
+      return;
+    }
+
+    const hasResults = Boolean((state?.searchResults || []).length);
+    const expanded = hasResults && Boolean(uiState.suggestedExpanded);
+    els.suggestedFiles.hidden = !expanded;
+    els.toggleSuggestedFiles.setAttribute("aria-expanded", String(expanded));
+    els.suggestedChevron.textContent = expanded ? "▾" : "▸";
   }
 
   function renderSummaryList(rows) {
