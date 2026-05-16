@@ -15,11 +15,6 @@ export function getWebviewHtml(webview: vscode.Webview, extensionUri: vscode.Uri
 </head>
 <body>
   <main class="app-shell">
-    <header class="shell-header">
-      <div class="brand-mark" aria-hidden="true"></div>
-      <h1>RepoForge</h1>
-    </header>
-
     <section class="panel">
       <div class="field-group">
         <label class="field-label" for="task">Task</label>
