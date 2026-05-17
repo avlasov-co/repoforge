@@ -66,8 +66,6 @@ Open the repository in VS Code and launch **Run Extension** from the debug panel
 
 This single composite capture shows the main release workflow in one place: sidebar, token budget, generated handoff, patch preview, and validation results.
 
-![RepoForge release workflow overview](docs/screenshots/release-overview.png)
-
 ## Sidebar Workflow
 
 The RepoForge sidebar is a static VS Code webview with no React or bundler.
