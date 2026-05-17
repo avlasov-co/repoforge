@@ -1,10 +1,5 @@
 # Changelog
 
-## v0.5.0.1
-
-### Changed
-- Refreshed the README screenshot asset for the GitHub release.
-
 ## v0.4.7
 
 ### Changed
