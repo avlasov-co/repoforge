@@ -88,7 +88,7 @@ export async function scanRepo(repoRoot: string): Promise<RepoScanResult> {
         };
         files.push(file);
         if (content !== undefined) {
-          codeMap.push(extractCodeMap(file.path, language, content, estimatedTokens, absolutePath));
+          codeMap.push(await extractCodeMap(file.path, language, content, estimatedTokens, absolutePath));
         }
       } catch {
         continue;

@@ -7,12 +7,18 @@ export async function runValidationCommand(
   timeoutMs = 120_000
 ): Promise<ValidationRunResult> {
   const startedAt = Date.now();
+  const env = {
+    ...process.env,
+    NO_COLOR: "1",
+    FORCE_COLOR: "0",
+    npm_config_color: "false"
+  };
 
   return new Promise<ValidationRunResult>((resolve) => {
     const child = spawn(command, {
       cwd: repoRoot,
       shell: true,
-      env: process.env
+      env
     });
 
     let stdout = "";

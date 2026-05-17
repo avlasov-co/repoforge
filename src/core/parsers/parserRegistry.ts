@@ -4,7 +4,7 @@ import { ParserInput } from "./parserTypes";
 import { parseWithRegex } from "./regexParser";
 import { parseRust } from "./rustParser";
 
-export function parseFile(input: ParserInput): ParseResult {
+export async function parseFile(input: ParserInput): Promise<ParseResult> {
   try {
     if (input.language === "python") {
       return parsePythonAst(input);

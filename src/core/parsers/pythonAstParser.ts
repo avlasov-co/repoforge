@@ -1,5 +1,5 @@
 import * as path from "path";
-import { execFileSync } from "child_process";
+import { spawn } from "child_process";
 import { CodeSymbol, ParseResult } from "../types";
 import { ParserInput } from "./parserTypes";
 import { parseWithRegex } from "./regexParser";
@@ -10,7 +10,7 @@ interface PythonBridgeResult {
   diagnostics?: unknown;
 }
 
-export function parsePythonAst(input: ParserInput): ParseResult {
+export async function parsePythonAst(input: ParserInput): Promise<ParseResult> {
   if (!input.absolutePath) {
     const fallback = parseWithRegex(input, "regex");
     return { ...fallback, diagnostics: ["python AST parser requires an absolute file path; used regex fallback"] };
@@ -18,11 +18,7 @@ export function parsePythonAst(input: ParserInput): ParseResult {
 
   const bridge = resolveBridgePath();
   try {
-    const stdout = execFileSync("python3", [bridge, input.absolutePath], {
-      encoding: "utf8",
-      timeout: 5000,
-      maxBuffer: 1024 * 1024
-    });
+    const stdout = await runPythonBridge(bridge, input.absolutePath);
     const parsed = JSON.parse(stdout) as PythonBridgeResult;
     return {
       path: input.path,
@@ -46,6 +42,32 @@ export function parsePythonAst(input: ParserInput): ParseResult {
 
 function resolveBridgePath(): string {
   return path.join(process.cwd(), "src", "core", "parsers", "python_ast_bridge.py");
+}
+
+function runPythonBridge(bridge: string, absolutePath: string): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const child = spawn("python3", [bridge, absolutePath]);
+
+    let stdout = "";
+    let stderr = "";
+
+    child.stdout.on("data", (chunk: Buffer | string) => {
+      stdout += chunk.toString();
+    });
+    child.stderr.on("data", (chunk: Buffer | string) => {
+      stderr += chunk.toString();
+    });
+    child.on("error", (error) => {
+      reject(error);
+    });
+    child.on("close", (code) => {
+      if (code === 0) {
+        resolve(stdout);
+        return;
+      }
+      reject(new Error(stderr.trim() || `python bridge exited with code ${code}`));
+    });
+  });
 }
 
 function stringArray(value: unknown): string[] {

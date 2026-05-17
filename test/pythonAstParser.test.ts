@@ -30,7 +30,7 @@ async def train_one_epoch(model, loader, optimizer, scheduler, device):
       "utf8"
     );
 
-    const result = parsePythonAst({
+    const result = await parsePythonAst({
       path: "trainer.py",
       absolutePath: filePath,
       language: "python",
@@ -58,7 +58,7 @@ async def train_one_epoch(model, loader, optimizer, scheduler, device):
     const filePath = path.join(dir, "broken.py");
     await fs.writeFile(filePath, "def broken(:\n", "utf8");
 
-    const result = parsePythonAst({ path: "broken.py", absolutePath: filePath, language: "python", content: "def broken(:\n" });
+    const result = await parsePythonAst({ path: "broken.py", absolutePath: filePath, language: "python", content: "def broken(:\n" });
 
     expect(result.backend).toBe("python-ast");
     expect(result.symbols).toEqual([]);

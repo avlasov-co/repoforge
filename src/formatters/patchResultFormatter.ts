@@ -1,5 +1,6 @@
 import { PatchPreview } from "../core/patch/patchTypes";
 import { PersistedValidationRunResult } from "../core/validation/validationHistory";
+import { sanitizeValidationRunResult } from "../core/validation/validationOutput";
 import { ValidationRunResult } from "../core/validation/validationTypes";
 
 export function formatPatchPreviewMarkdown(preview: PatchPreview): string {
@@ -37,6 +38,7 @@ export function formatPatchPreviewMarkdown(preview: PatchPreview): string {
 }
 
 export function formatValidationResultMarkdown(result: ValidationRunResult | PersistedValidationRunResult): string {
+  const sanitized = sanitizeValidationRunResult(result);
   return [
     "# RepoForge Validation Result",
     "",
@@ -58,13 +60,13 @@ export function formatValidationResultMarkdown(result: ValidationRunResult | Per
     "## stdout",
     "",
     "```text",
-    result.stdout || "(empty)",
+    sanitized.stdout || "(empty)",
     "```",
     "",
     "## stderr",
     "",
     "```text",
-    result.stderr || "(empty)",
+    sanitized.stderr || "(empty)",
     "```"
   ].join("\n");
 }

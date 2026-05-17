@@ -7,9 +7,8 @@ export function extractCodeMap(
   content: string,
   estimatedTokens: number,
   absolutePath?: string
-): CodeMapEntry {
-  const result = parseFile({ path: filePath, language, content, absolutePath });
-  return {
+): Promise<CodeMapEntry> {
+  return parseFile({ path: filePath, language, content, absolutePath }).then((result) => ({
     path: filePath,
     language,
     backend: result.backend,
@@ -17,5 +16,5 @@ export function extractCodeMap(
     symbols: result.symbols,
     diagnostics: result.diagnostics,
     estimatedTokens
-  };
+  }));
 }

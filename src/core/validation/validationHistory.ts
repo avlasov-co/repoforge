@@ -1,5 +1,6 @@
 import * as fs from "fs/promises";
 import * as path from "path";
+import { sanitizeValidationRunResult } from "./validationOutput";
 import { ValidationRunResult } from "./validationTypes";
 
 const MAX_OUTPUT_BYTES = 100 * 1024;
@@ -65,10 +66,11 @@ export async function readLastValidationResult(repoRoot: string): Promise<Persis
 }
 
 function trimValidationOutput(result: ValidationRunResult): PersistedValidationRunResult {
-  const stdout = trimToBytes(result.stdout, MAX_OUTPUT_BYTES);
-  const stderr = trimToBytes(result.stderr, MAX_OUTPUT_BYTES);
+  const sanitized = sanitizeValidationRunResult(result);
+  const stdout = trimToBytes(sanitized.stdout, MAX_OUTPUT_BYTES);
+  const stderr = trimToBytes(sanitized.stderr, MAX_OUTPUT_BYTES);
   return {
-    ...result,
+    ...sanitized,
     stdout: stdout.value,
     stderr: stderr.value,
     truncated: stdout.truncated || stderr.truncated,

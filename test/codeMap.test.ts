@@ -2,8 +2,8 @@ import { describe, expect, it } from "vitest";
 import { extractCodeMap } from "../src/core/codeMap";
 
 describe("extractCodeMap", () => {
-  it("extracts TypeScript imports and symbols", () => {
-    const map = extractCodeMap(
+  it("extracts TypeScript imports and symbols", async () => {
+    const map = await extractCodeMap(
       "src/example.ts",
       "typescript",
       `import { readFile } from "fs/promises";
@@ -30,8 +30,8 @@ export const routeRequest = () => true;
     expect(map.symbols.find((symbol) => symbol.name === "loadUser")?.kind).toBe("method");
   });
 
-  it("extracts React TSX components and exports", () => {
-    const map = extractCodeMap(
+  it("extracts React TSX components and exports", async () => {
+    const map = await extractCodeMap(
       "src/App.tsx",
       "typescript",
       `import React, { memo, forwardRef } from "react";
@@ -63,8 +63,8 @@ export default FancyInput;
     expect(map.symbols.find((symbol) => symbol.name === "Card")?.kind).toBe("function");
   });
 
-  it("extracts Python imports, classes, functions, and methods", () => {
-    const map = extractCodeMap(
+  it("extracts Python imports, classes, functions, and methods", async () => {
+    const map = await extractCodeMap(
       "app/main.py",
       "python",
       `import os
@@ -90,8 +90,8 @@ def build_runner():
     );
   });
 
-  it("extracts polished Python async functions, constants, and multiline signatures", () => {
-    const map = extractCodeMap(
+  it("extracts polished Python async functions, constants, and multiline signatures", async () => {
+    const map = await extractCodeMap(
       "worker/tasks.py",
       "python",
       `from app.core import (
@@ -124,8 +124,8 @@ async def dispatch_job(job_id: str):
     expect(map.symbols.find((symbol) => symbol.name === "run")?.signature).toContain("payload: dict");
   });
 
-  it("extracts Rust modules, types, impl methods, traits, constants, and functions", () => {
-    const map = extractCodeMap(
+  it("extracts Rust modules, types, impl methods, traits, constants, and functions", async () => {
+    const map = await extractCodeMap(
       "src/lib.rs",
       "rust",
       `use std::sync::Arc;
